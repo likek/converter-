@@ -1,0 +1,84 @@
+<html>
+<head>
+    <title></title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="converter.css">
+    <script src="./base/forms/install.js"></script>
+    <script src="./base/FIIS.js"></script>
+    <script src="./base/app.js"></script>
+    <script src="converter.js"></script>
+    <script type="text/javascript">
+        var data = [];
+        for (var i = 0; i < 1000; i++) {
+            data.push({
+                ModalityName: "data_" + i,
+                ModalityCode: i + "",
+                Remarks: "备注" + i,
+            });
+        }
+        var modalityList = {
+            "ErrorCode": "0000",
+            "Result": data,
+        };
+
+        var modalityListStyle = {
+            'classHeader':'TableViewConv-Header',
+            'classSelectedRow': 'TableViewConv-SelectedRow',
+            'classUnselectedRow': 'TableViewConv-UnselectedRow',
+
+            "nameMember": "Name",
+            "widthMember": "Width",
+            'sortableFields': ['ModalityCode','ModalityName'],//允许排序的字段
+            'defaultSort': {field:'ModalityName',mode:1},//默认排序字段
+            columns: [{
+                Name: 'ModalityCode',
+                Description: "类型编号",
+                Width: 240,
+                sortable:true,
+                sortOption:{numeric:true},
+            }, {
+                Name: 'ModalityName',
+                Description: "类型名称",
+                Width: 240,
+            },{
+                Name: 'Remarks',
+                Description: "备注",
+                Width: 240,
+            },
+            ]
+        };
+        var loginForm;
+
+        function init() {
+            var tb = document.getElementById("tb");
+            loginForm = new LoginForm(document.body);
+            formCallCenter.RegisterForm("LoginModule", loginForm);
+        }
+
+        function LoginForm() {
+            FIISForm.apply(this, arguments);
+            var titles = {
+                "ModalityList": "ModalityList"
+            };
+            for (var t in titles) {
+                this.SetTitle(t, titles[t]);
+            }
+        }
+    </script>
+
+</head>
+<body onload="init()" id="tb">
+
+<button onclick="alert(formCallCenter.DetectFormByElement(this).GetField('currModality').getJsonRaw());">读取值</button>
+
+<button onclick="loginForm.SetField('currModality',data.slice(6,7))">设置值和当前选中行</button>
+
+<div field="ModalityList" itemfield="currModality" itemlocalfield="true"
+     conv="FIISForm.TableViewConv(modalityListStyle)"
+     requester="FIISForm.JSObjectRequester(modalityList)"
+     style="height: 300px;width: 600px;">
+</div>
+
+
+</body>
+</html>

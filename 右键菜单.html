@@ -1,0 +1,70 @@
+<html>
+<head>
+    <title></title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="converter.css">
+    <script src="./base/forms/install.js"></script>
+    <script src="./base/FIIS.js"></script>
+    <script src="./base/app.js"></script>
+    <script src="converter.js"></script>
+    <script type="text/javascript">
+        var data = [];
+        for (var i = 0; i < 100; i++) {
+            data.push({
+                ModalityName: "data_" + i,
+                ModalityCode: i + ""
+            });
+        }
+        var modalityList = {
+            "ErrorCode": "0000",
+            "Result": data,
+        };
+        var modalityListStyle = {
+            'displayMember': 'ModalityName', 'valueMember': 'ModalityCode',
+            'classItem':"FloatListConv-Item",
+            'classMenu':'FloatListConv-Menu',
+            src:"box",
+            handler:{
+                "*":function (e,d) {
+                    alert(d.ModalityCode);
+                },
+                'data_0':function (e,d) {
+                    alert(d.getJsonRaw());
+                },
+                'data_1':function (e,d) {
+                    alert(d.getJsonRaw());
+                },
+            }
+        };
+        var loginForm;
+
+        function init() {
+            var tb = document.getElementById("tb");
+            loginForm = new LoginForm(document.body);
+            formCallCenter.RegisterForm("LoginModule", loginForm);
+        }
+
+        function LoginForm() {
+            FIISForm.apply(this, arguments);
+            var titles = {
+                "ModalityList": "ModalityList"
+            };
+            for (var t in titles) {
+                this.SetTitle(t, titles[t]);
+            }
+        }
+    </script>
+
+</head>
+<body onload="init()" id="tb">
+
+<div field="ModalityList" itemfield="currModality" itemlocalfield="true"
+     conv="FIISForm.FloatListConv(modalityListStyle)"
+     requester="FIISForm.JSObjectRequester(modalityList)"
+     style="width: 240px;">
+</div>
+
+
+<div id="box" style="width: 300px;height: 300px;border: 1px solid #f00;"></div>
+</body>
+</html>

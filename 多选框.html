@@ -1,0 +1,64 @@
+<html>
+<head>
+    <title></title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="converter.css">
+    <script src="./base/forms/install.js"></script>
+    <script src="./base/FIIS.js"></script>
+    <script src="./base/app.js"></script>
+    <script src="converter.js"></script>
+    <script type="text/javascript">
+        var data = [];
+        for (var i = 0; i < 1000; i++) {
+            data.push({
+                ModalityName: "data_" + i,
+                ModalityCode: i + ""
+            });
+        }
+        var modalityList = {
+            "ErrorCode": "0000",
+            "Result": data,
+        };
+        var modalityListStyle = {
+            'displayMember': 'ModalityName', 'valueMember': 'ModalityCode',
+            'classSelectdItem': 'CheckboxlistViewConv-SelectdItem',
+            'classUnselectdItem': 'CheckboxlistViewConv-UnselectdItem',
+            'classSelectedLabel': 'CheckboxlistViewConv-SelectedLabel',
+            'classUnselectedLabel': 'CheckboxlistViewConv-UnselectedLabel',
+            'classSelectedText': 'CheckboxlistViewConv-SelectedText',
+            'classUnselectedText': 'CheckboxlistViewConv-UnselectedText',
+        };
+        var loginForm;
+
+        function init() {
+            var tb = document.getElementById("tb");
+            loginForm = new LoginForm(document.body);
+            formCallCenter.RegisterForm("LoginModule", loginForm);
+        }
+
+        function LoginForm() {
+            FIISForm.apply(this, arguments);
+            var titles = {
+                "ModalityList": "ModalityList"
+            };
+            for (var t in titles) {
+                this.SetTitle(t, titles[t]);
+            }
+        }
+    </script>
+</head>
+<body onload="init()" id="tb">
+
+<input type="button" value="读取值" onclick="alert(formCallCenter.DetectFormByElement(this).GetField('currModality').getJsonRaw());"/>
+
+<button onclick="loginForm.SetField('currModality',[data.slice(6,9)])">
+    设置多选值
+</button>
+
+<div field="ModalityList" itemfield="currModality" itemlocalfield="true"
+     conv="FIISForm.CheckboxListConv(modalityListStyle)"
+     requester="FIISForm.JSObjectRequester(modalityList)">
+</div>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+
+/* Conv - 单选框 - 默认 */
+.RadioListConv-UnselectdItem,.RadioListConv-SelectdItem{
+    margin: 0 6px;
+}
+.RadioListConv-UnselectedLabel,.RadioListConv-SelectedLabel{
+    margin-right: 6px;
+}
+.RadioListConv-UnselectedText,.RadioListConv-SelectedText{
+    vertical-align: bottom;
+}
+/* Conv - 多选框 - 默认 */
+.CheckboxlistViewConv-UnselectdItem,.CheckboxlistViewConv-SelectdItem{
+    margin: 0 6px;
+}
+.CheckboxlistViewConv-UnselectedLabel,.CheckboxlistViewConv-SelectedLabel{
+    margin-right: 6px;
+}
+.CheckboxlistViewConv-UnselectedText,.CheckboxlistViewConv-SelectedText{
+    vertical-align: bottom;
+}
+
+/* Conv - 多选下拉列表 - 默认 */
+.CheckboxDroplistConv-UnselectdItem,.CheckboxDroplistConv-SelectdItem{
+    line-height: 30px;
+    border-bottom: 1px solid #ccc;
+}
+.CheckboxDroplistConv-UnselectdItem:hover,.CheckboxDroplistConv-SelectdItem:hover{
+    background-color: #eee;
+}
+.CheckboxDroplistConv-Input{
+    cursor: pointer;
+    padding: 0 6px;
+}
+.CheckboxDroplistConv-FilterInput{
+    padding: 0 6px;
+}
+.CheckboxDroplistConv-Menu{
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+    box-sizing: border-box;
+}
+
+/* Conv - 表格 - 默认 */
+.TableViewConv-Header,.TableViewConv-UnselectedRow,.TableViewConv-SelectedRow{
+    cursor: pointer;
+    line-height: 30px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+.TableViewConv-UnselectedRow:hover,.TableViewConv-SelectedRow:hover{
+    background-color: #eee;
+}
+.TableViewConv-Header{
+    font-weight: 900;
+}
+.TableViewConv-SelectedRow {
+    font-weight: 600;
+}
+
+/* Conv - 右键菜单 - 默认 */
+.FloatListConv-Item{
+    line-height: 30px;
+    padding-left: 10px;
+    border-bottom: 1px solid #ccc;
+    background-color: #fff;
+}
+.FloatListConv-Item:hover{
+    background-color: #eee;
+}
+.FloatListConv-Menu{
+    border: 1px solid #666;
+}
+
+/* Conv - 表格(多选行) - 默认 */
+.TableViewConv-Header,.TableViewConv-UnselectedRow,.TableViewConv-SelectedRow{
+    cursor: pointer;
+    line-height: 30px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+.TableViewConv-UnselectedRow:hover,.TableViewConv-SelectedRow:hover{
+    background-color: #eee;
+}
+.TableViewConv-Header{
+    font-weight: 900;
+}
+.TableViewConv-SelectedRow {
+    font-weight: 600;
+}
