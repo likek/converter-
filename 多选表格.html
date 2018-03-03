@@ -35,7 +35,6 @@
                 Width: 240,
                 sortable:true,
                 sortOption:{numeric:true},
-                defaultSort:true,
             }, {
                 Name: 'ModalityName',
                 Description: "类型名称",
@@ -57,12 +56,6 @@
 
         function LoginForm() {
             FIISForm.apply(this, arguments);
-            var titles = {
-                "ModalityList": "ModalityList"
-            };
-            for (var t in titles) {
-                this.SetTitle(t, titles[t]);
-            }
         }
     </script>
 </head>

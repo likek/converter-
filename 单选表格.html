@@ -28,8 +28,6 @@
 
             "nameMember": "Name",
             "widthMember": "Width",
-            'sortableFields': ['ModalityCode','ModalityName'],//允许排序的字段
-            // 'defaultSort': {field:'ModalityName',mode:1},//默认排序字段
             columns: [{
                 Name: 'ModalityCode',
                 Description: "类型编号",
@@ -57,12 +55,6 @@
 
         function LoginForm() {
             FIISForm.apply(this, arguments);
-            var titles = {
-                "ModalityList": "ModalityList"
-            };
-            for (var t in titles) {
-                this.SetTitle(t, titles[t]);
-            }
         }
     </script>
 
