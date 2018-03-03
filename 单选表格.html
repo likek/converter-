@@ -65,7 +65,7 @@
 
 <button onclick="loginForm.SetField('currModality',data.slice(6,7))">设置值和当前选中行</button>
 
-<div field="ModalityList" itemfield="currModality" itemlocalfield="true"
+<div field="ModalityList" itemfield="currModality" itemValueMember="ModalityCode" itemlocalfield="true"
      conv="FIISForm.TableViewConv(modalityListStyle)"
      requester="FIISForm.JSObjectRequester(modalityList)"
      style="height: 300px;width: 600px;">

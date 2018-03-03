@@ -1,71 +1,3 @@
-Object.prototype.isEqual = Object.prototype.isEqual || function () {
-    var i, l, leftChain, rightChain;
-    function compare2Objects(x, y) {
-        var p;
-        if (
-            isNaN(x) && isNaN(y) && typeof x === 'number' && typeof y === 'number' ||
-            (x === y)
-        ) {
-            return true;
-        }
-        if ((typeof x === 'function' && typeof y === 'function') || (x instanceof Date && y instanceof Date) || (x instanceof RegExp && y instanceof RegExp) || (x instanceof String && y instanceof String) || (x instanceof Number && y instanceof Number)) {
-            return x.toString() === y.toString();
-        }
-        if (
-            !(x instanceof Object && y instanceof Object) ||
-            (x.isPrototypeOf(y) || y.isPrototypeOf(x)) ||
-            (x.constructor !== y.constructor) ||
-            (x.prototype !== y.prototype) ||
-            (leftChain.indexOf(x) > -1 || rightChain.indexOf(y) > -1)//循环引用
-        ) {
-            return false;
-        }
-        for (p in y) {
-            if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
-                return false;
-            } else if (typeof y[p] !== typeof x[p]) {
-                return false;
-            }
-        }
-        for (p in x) {
-            if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
-                return false;
-            } else if (typeof y[p] !== typeof x[p]) {
-                return false;
-            }
-            switch (typeof(x[p])) {
-                case 'object':
-                case 'function':
-                    leftChain.push(x);
-                    rightChain.push(y);
-                    if (!compare2Objects(x[p], y[p])) {
-                        return false;
-                    }
-                    leftChain.pop();
-                    rightChain.pop();
-                    break;
-                default:
-                    if (x[p] !== y[p]) {
-                        return false;
-                    }
-                    break;
-            }
-        }
-        return true;
-    }
-    if (arguments.length < 1) {
-        return true;
-    }
-    for (i = 0, l = arguments.length; i < l; i++) {
-        leftChain = [];
-        rightChain = [];
-        if (!compare2Objects(this, arguments[i])) {
-            return false;
-        }
-    }
-    return true;
-};
-
 window.forms.CheckboxlistViewConv = function (filter, style) {
     window.forms.ListValueConv.apply(this, [style]);
     var mnu;
@@ -335,7 +267,7 @@ window.forms.CheckboxlistViewConv = function (filter, style) {
     window.forms.CheckboxlistViewConv.ItemValueConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1;
+            return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
         };
         this.GetUIValue = this.GetValue = function (ele) {
             return ele.__bindedData || [];
@@ -499,8 +431,8 @@ window.forms.RadioListConv = function (style) {
     window.forms.TileListConv.RadioListItemConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1;
-        }
+            return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
+        };
         this.GetUIValue = this.GetValue = function (ele) {
             if(ele.__bindedData){return ele.__bindedData;}
             else {
@@ -592,8 +524,8 @@ window.forms.CheckboxListConv = function (style) {
     window.forms.TileListConv.TileListItemConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1;
-        }
+            return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
+        };
         this.GetUIValue = this.GetValue = function (ele) {
             var val = [];
             for (var i = 0; i < ele.children.length; i++) {
@@ -641,7 +573,7 @@ window.forms.CheckboxListConv = function (style) {
 window.forms.TableViewConv = function (style) {
     window.forms.ListValueConv.apply(this, [style]);
     this.CompareValues = function (val1, val2) {
-        return 1;
+        return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
     };
     this.GetUIValue = this.GetValue;
     var table;
@@ -671,7 +603,7 @@ window.forms.TableViewConv = function (style) {
                             e.__currData = d;
                             if(field){
                                 var currD = form.GetField(field);
-                                if(currD && currD.isEqual(d)){
+                                if(window.forms.object.Compare(currD,d) === 0){
                                     e.__selected = true;
                                     e.className = style.classSelectedRow;
                                 }else {
@@ -769,7 +701,7 @@ window.forms.TableViewConv = function (style) {
     window.forms.TableViewConv.TableViewItemValueConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1;
+            return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
         }
         this.GetUIValue = this.GetValue = function (ele) {
             if (ele.__bindedData) {return ele.__bindedData;}
@@ -782,146 +714,150 @@ window.forms.TableViewConv = function (style) {
             }
         }
         this.ApplyValue = function (ele, value) {
+            var valueMember =ele.getAttribute('valueMember');
             var rows = ele.children[0].children[1].children[0].children[0].children;
             for(var i = 1,l = rows.length;i<l;i++){
                 var e = rows[i];
-                e.className = (e.__currData||"").isEqual(value) ? style.classSelectedRow : style.classUnselectedRow;
+                e.className = e.__currData&&e.__currData[valueMember] === value[valueMember] ? style.classSelectedRow : style.classUnselectedRow;
             }
         }
     };
 };
 
-window.forms.CheckboxTableConv = function (style) {
-    window.forms.TableViewConv.apply(this,arguments);
-    var table;
-    var applyValue = this.ApplyValue;
-    this.ApplyValue = function (ele, value) {
-        applyValue(ele, value);
-        table.Refresh();
-    };
-    this.ApplyItem = function (self) {
-        return function (ele, list, index) {
-            if (index == -1) {
-                if (!table) {
-                    var tableContainer = ele.ownerDocument.createElement('div');
-                    ele.appendChild(tableContainer);
-                    tableContainer.style.height = 'inherit';
-                    tableContainer.style.width = 'inherit';
-                    table = new TableView(tableContainer,style);
-
-                    var drawRow = table.drawRow;
-                    var drawRowCell = table.drawRowCell;
-                    table.drawRow = function (doc, e, ri, d, style) {
-                        drawRow(doc, e, ri, d, style);
-                        if(ri>0){
-                            if(e.__hasDrawed)return;
-                            e.__currData = d;
-                            var field = tableContainer.getAttribute("field");
-                            var form = formCallCenter.DetectFormByElement(tableContainer);
-                            if(field){
-                                var currD = form.GetField(field);
-                                var idx = -1;
-                                for(var i = 0;i<currD.length;i++){
-                                    if(currD[i].isEqual(d)){
-                                        idx = i;
-                                    }
-                                }
-                                if(idx !== -1){
-                                    e.__selected = true;
-                                    e.className = style.classSelectedRow;
-                                }else {
-                                    e.__selected = false;
-                                    e.className = style.classUnselectedRow;
-                                }
-                            }else {
-                                e.__selected = false;
-                                e.className = style.classUnselectedRow;
-                            }
-                            window.forms.Event.Register(e,(style.selectedEvent||"mousedown"),function () {
-                                if (!field || field == "") return;
-                                if(e.__lastTrigger){clearTimeout(e.__lastTrigger)}
-                                e.__lastTrigger = setTimeout(function () {
-                                    e.__selected = !(e.__selected);
-                                    if(e.__selected){
-                                        currDataRefresh(d,'push');
-                                    }else {
-                                        currDataRefresh(d,'remove');
-                                    }
-                                },0)
-                            });
-                            function currDataRefresh(r,mode) {
-                                var d = form.GetField(field);
-                                switch (mode){
-                                    case 'push':
-                                        form.SetField(field, [d.concat([r])], true);
-                                        break;
-                                    case 'remove':
-                                        var idx = -1;
-                                        for(var i=0;i<d.length;i++){
-                                            if(d[i].isEqual(r)){
-                                                idx = i;
-                                                break;
-                                            }
-                                        }
-                                        if(idx !== -1){
-                                            var pd = d.slice();
-                                            pd.splice(idx,1);
-                                            form.SetField(field, [pd], true);
-                                        }
-                                        break;
-                                }
-                            }
-                            e.__hasDrawed = true;
-                        }
-                        self.drawRow(doc, e, ri, d, style);
-                    };
-                    table.drawRowCell = function (doc, e, ri, r, ci, c, style) {
-                        drawRowCell(doc, e, ri, r, ci, c, style);
-                        self.drawRowCell(doc, e, ri, r, ci, c, style);
-                    };
-                    table.drawColumnCell = function (doc, e, ci, c, style) {
-                        self.drawColumnCell(doc, e, ci, c, style,ele,list.slice());
-                    };
-                    var columns = style.columns;
-                    for(var i = 0;i<columns.length;i++){
-                        table.Columns().Add(columns[i]);
-                    }
-                }
-                table.Rows().Clear();
-                self.InheritProperties(ele, ele.children[0]);
-            }
-            else {
-                table.Rows().Add(list[index]);
-            }
-        }
-    } (this);
-    window.forms.TableViewConv.TableViewItemValueConv = function (style) {
-        window.forms.SingleValueConv.apply(this);
-        this.CompareValues = function (val1, val2) {
-            return 1;
-        }
-        this.GetUIValue = this.GetValue = function (ele) {
-            return ele.__bindedData || [];
-        }
-        this.ApplyValue = function (ele, value) {
-            setTimeout(function () {
-                var rows = ele.children[0].children[1].children[0].children[0].children;
-                for(var i = 1,l = rows.length;i<l;i++){
-                    var e = rows[i];
-                    e.className = HasSelected(e.__currData) ? style.classSelectedRow : style.classUnselectedRow;
-                }
-                function HasSelected(r) {
-                    for(var i = 0;i<ele.__bindedData.length;i++){
-                        if(ele.__bindedData[i].isEqual(r)){
-                            return true;
-                        }
-                    }
-                    return  false;
-                }
-            },0);
-        }
-    };
-};
+// window.forms.CheckboxTableConv = function (style) {
+//     window.forms.TableViewConv.apply(this,arguments);
+//     var table;
+//     var applyValue = this.ApplyValue;
+//     this.ApplyValue = function (ele, value) {
+//         applyValue(ele, value);
+//         table.Refresh();
+//     };
+//     this.ApplyItem = function (self) {
+//         return function (ele, list, index) {
+//             if (index == -1) {
+//                 if (!table) {
+//                     var tableContainer = ele.ownerDocument.createElement('div');
+//                     ele.appendChild(tableContainer);
+//                     tableContainer.style.height = 'inherit';
+//                     tableContainer.style.width = 'inherit';
+//                     table = new TableView(tableContainer,style);
+//
+//                     var drawRow = table.drawRow;
+//                     var drawRowCell = table.drawRowCell;
+//                     table.drawRow = function (doc, e, ri, d, style) {
+//                         drawRow(doc, e, ri, d, style);
+//                         if(ri>0){
+//                             if(e.__hasDrawed)return;
+//                             e.__currData = d;
+//                             var field = tableContainer.getAttribute("field");
+//                             var form = formCallCenter.DetectFormByElement(tableContainer);
+//                             if(field){
+//                                 var currD = form.GetField(field);
+//                                 var idx = -1;
+//                                 for(var i = 0;i<currD.length;i++){
+//                                     if(window.forms.object.Compare(currD[i],d)){
+//                                         idx = i;
+//                                     }
+//                                 }
+//                                 if(idx !== -1){
+//                                     e.__selected = true;
+//                                     e.className = style.classSelectedRow;
+//                                 }else {
+//                                     e.__selected = false;
+//                                     e.className = style.classUnselectedRow;
+//                                 }
+//                             }else {
+//                                 e.__selected = false;
+//                                 e.className = style.classUnselectedRow;
+//                             }
+//                             window.forms.Event.Register(e,(style.selectedEvent||"mousedown"),function () {
+//                                 if (!field || field == "") return;
+//                                 if(e.__lastTrigger){clearTimeout(e.__lastTrigger)}
+//                                 e.__lastTrigger = setTimeout(function () {
+//                                     e.__selected = !(e.__selected);
+//                                     if(e.__selected){
+//                                         currDataRefresh(d,'push');
+//                                     }else {
+//                                         currDataRefresh(d,'remove');
+//                                     }
+//                                 },0)
+//                             });
+//                             function currDataRefresh(r,mode) {
+//                                 var d = form.GetField(field);
+//                                 var valueMember = ele.children[0].getAttribute('valueMember')
+//                                 switch (mode){
+//                                     case 'push':
+//                                         form.SetField(field, [d.concat([r])], true);
+//                                         break;
+//                                     case 'remove':
+//                                         var idx = -1;
+//                                         for(var i=0;i<d.length;i++){
+//                                             if(d[i][valueMember] === r[valueMember]){
+//                                                 idx = i;
+//                                                 break;
+//                                             }
+//                                         }
+//                                         if(idx !== -1){
+//                                             var pd = d.slice();
+//                                             pd.splice(idx,1);
+//                                             form.SetField(field, [pd], true);
+//                                         }
+//                                         break;
+//                                 }
+//                             }
+//                             e.__hasDrawed = true;
+//                         }
+//                         self.drawRow(doc, e, ri, d, style);
+//                     };
+//                     table.drawRowCell = function (doc, e, ri, r, ci, c, style) {
+//                         drawRowCell(doc, e, ri, r, ci, c, style);
+//                         self.drawRowCell(doc, e, ri, r, ci, c, style);
+//                     };
+//                     table.drawColumnCell = function (doc, e, ci, c, style) {
+//                         self.drawColumnCell(doc, e, ci, c, style,ele,list.slice());
+//                     };
+//                     var columns = style.columns;
+//                     for(var i = 0;i<columns.length;i++){
+//                         table.Columns().Add(columns[i]);
+//                     }
+//                 }
+//                 table.Rows().Clear();
+//                 self.InheritProperties(ele, ele.children[0]);
+//             }
+//             else {
+//                 table.Rows().Add(list[index]);
+//             }
+//         }
+//     } (this);
+//     window.forms.TableViewConv.TableViewItemValueConv = function (style) {
+//         window.forms.SingleValueConv.apply(this);
+//         this.CompareValues = function (val1, val2) {
+//             return window.forms.object.Compare(val1,val2)===0 ? 0 : 1;
+//         }
+//         this.GetUIValue = this.GetValue = function (ele) {
+//             return ele.__bindedData || [];
+//         }
+//         this.ApplyValue = function (ele, value) {
+//             setTimeout(function () {
+//                 var valueMember = ele.getAttribute("valueMember");
+//                 var rows = ele.children[0].children[1].children[0].children[0].children;
+//                 for(var i = 1,l = rows.length;i<l;i++){
+//                     var e = rows[i];
+//                     e.className = HasSelected(e.__currData) ? style.classSelectedRow : style.classUnselectedRow;
+//                 }
+//                 function HasSelected(r) {
+//                     for(var i = 0;i<ele.__bindedData.length;i++){
+//                         if(ele.__bindedData[i][valueMember] === r[valueMember]){
+//                             console.log(ele.__bindedData[i][valueMember])
+//                             return true;
+//                         }
+//                     }
+//                     return  false;
+//                 }
+//             },0);
+//         }
+//     };
+// };
 
 //普通多选下拉列表
 FIISForm.CheckboxDroplistConv = function (style) {
