@@ -944,8 +944,6 @@ FIISForm.GroupListConv = function () {
     FIISForm.FIISValueDecoder.apply(this);
 };
 
-
-
 /**************************************************************************************/
 var components = components || {};
 components.navTabs = function (tabBox,defaultTab,style,doc) {
