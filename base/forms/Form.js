@@ -1,57 +1,62 @@
 ﻿//__bindedData:前端元素绑定后台数据
 //__currData:前端元素关联数据
-function manageFieldElement(ele) {
-    if (ele.__manage__) return;
-    ele.__field__ = ele.getAttribute("field");
-    ele.__formID__ = ele.getAttribute("formID");
+//__form_states__:状态缓存
+function manageElement(ele) {
+    if (!ele.__form_states__) {
+        var attributes = {};
+        attributes.setAttr = ele.setAttribute;
+        attributes.getAttr = ele.getAttribute;
+        attributes.rmvAttr = ele.removeAttribute;
+        attributes.flags = {};
+        attributes.values = {};
+        ele.setAttribute = function (attributes) {
+            return function (name, value) {
+                attributes.setAttr.apply(ele, [name, value]);
+                attributes.values[name] = value;
+                attributes.flags[name] = 1;
+            }
+        } (attributes);
+        ele.getAttribute = function (attributes) {
+            return function (name) {
+                if (!attributes.flags[name]) {
+                    attributes.values[name] = attributes.getAttr.apply(ele, [name]);
+                    attributes.flags[name] = 1;
+                }
+                return attributes.values[name];
+            }
+        } (attributes);
+        ele.removeAttribute = function (attributes) {
+            return function (name) {
+                delete attributes.values[name];
+                delete attributes.flags[name];
+                attributes.rmvAttr.apply(ele, [name]);
+            }
+        } (attributes);
+        var objects = {};
+        objects.names = {};
+        objects.values = {};
+        attributes.objects = objects;
 
-    ele.__set_base__ = ele.setAttribute;
-    ele.setAttribute = function (name, value) {
-        switch (name) {
-            case "field":
-                ele.__field__ = value;
-                break;
-            case "formID":
-                ele.__formID__ = value;
-                break;
-            default:
-                ele.__set_base__(name, value);
-                break;
-        }
+        ele.__form_states__ = {};
+        ele.__form_states__.formAttributes = attributes;
     }
-
-    ele.__get_base__ = ele.getAttribute;
-    ele.getAttribute = function (name) {
-        switch (name) {
-            case "field":
-                var f = ele.__field__;
-                if (!f) ele.__field__ = "";
-                return f;
-            case "formID":
-                var f = ele.__formID__;
-                if (!f) ele.__formID__ = "";
-                return f;
-            default:
-                return ele.__get_base__(name);
-        }
+    var result = ele.__form_states__;
+    for (var i = 1; i < arguments.length; i++) {
+        var p = arguments[i];
+        if (typeof (p) != "string") break;
+        if (!result[p]) result[p] = {};
+        result = result[p];
     }
-
-    ele.__rmv_base__ = ele.removeAttribute;
-    ele.removeAttribute = function (name) {
-        switch (name) {
-            case "field":
-                ele.__field__ = "";
-                break;
-            case "formID":
-                ele.__formID__ = "";
-                break;
-            default:
-                ele.__rmv_base__(name);
-                break;
-        }
-    }
-
-    ele.__manage__ = true;
+    return result;
+}
+//应考虑定期、递归清理（设计【内部对象】标记）
+function unmanageElement(ele) {
+    if (!ele.__form_states__ || !ele.__form_states__.formAttributes) return;
+    var attributes = ele.__form_states__.formAttributes;
+    ele.setAttribute = attributes.setAttr;
+    ele.setAttribute = attributes.getAttr;
+    ele.removeAttribute = attributes.rmvAttr;
+    delete ele.__form_states__;
 }
 window.forms.SingleValueConv = function () {
     this.CompareValues = function (val1, val2) {
@@ -70,8 +75,8 @@ window.forms.SingleValueConv = function () {
         return function (ele, args) {
             var val = self.DecodeArguments(ele, args);
             if (!self.DetermineApply(ele, val)) return false;
-            self.ApplyValue(ele, val);
             ele.__bindedData = val;
+            self.ApplyValue(ele, val);
             var vc = ele.getAttribute("valueChanged");
             if (vc) {
                 var vcEvt = eval(vc);
@@ -135,13 +140,15 @@ window.forms.ListValueConv = function () {
                     var options = ele.options;
                     if (index == -1) {
                         options.length = 0;
-                        window.forms.Event.Unregister(ele, "onchange");
-                        window.forms.Event.Register(ele, "onchange", function () {
+                        var events = manageElement(ele, "events");
+                        window.forms.Event.Unregister(ele, events["onchange"]);
+                        events["onchange"] = function () {
                             var itemField = ele.getAttribute("itemField");
                             if (!itemField || itemField == "") return;
                             var form = formCallCenter.DetectFormByElement(ele);
                             form.SetField(itemField, [ele.selectedIndex < 0 ? null : ele.options[ele.selectedIndex].__currData], true);
-                        });
+                        };
+                        window.forms.Event.Register(ele, "onchange", events["onchange"]);
                     }
                     else {
                         var option = new Option(list[index][displayMember], list[index][valueMember]);
@@ -156,7 +163,7 @@ window.forms.ListValueConv = function () {
     } (this);
     this.InheritProperties = function (srcElement, desElement) {
         window.forms.Form.SetAttribute(desElement, "conv", "window.forms.ListValueConv.ListItemValueConv", true);
-        window.forms.Form.InheritAttributes(srcElement, desElement);
+        return window.forms.Form.InheritAttributes(srcElement, desElement);
     }
     window.forms.ListValueConv.ListItemValueConv = function () {
         window.forms.SingleValueConv.apply(this);
@@ -170,7 +177,6 @@ window.forms.ListValueConv = function () {
 }
 window.forms.Form = function (form) {
     var form = form;
-    var labels = new window.forms.Map();
     this.FormElement = function (self) {
         return function (ele) {
             var form = self.GetForm();
@@ -207,7 +213,7 @@ window.forms.Form = function (form) {
                 var elements = wnd.document.all;
                 for (var i = 0; i < elements.length; i++) {
                     var ele = elements[i];
-                    manageFieldElement(ele);
+                    manageElement(ele);
                     if (filter(ele)) result[result.length] = ele;
                 }
                 var iframes = wnd.document.getElementsByTagName("IFRAME");
@@ -225,7 +231,8 @@ window.forms.Form = function (form) {
             if (!field || field == "") throw new Error("Null field");
             var e = null;
             var call = function (ele) {
-                ele.__Form__init__ = true;
+                var init = manageElement(ele, "formInit");
+                init.flag = true;
                 self.GetConverter(ele).SetValue(ele, args);
                 if (!e) {
                     var localField = ele.getAttribute("localField");
@@ -262,21 +269,6 @@ window.forms.Form = function (form) {
     } (this);
     this.GetConverter = function (ele) {
         return window.forms.Element(ele).GetObject("conv", defConv);
-    }
-    this.SetTitle = function (name, value) {
-        var index = labels.IndexOfKey(name);
-        if (index >= 0) labels.RemoveAt(index);
-        if (typeof (value) == "string") labels.Add(name, value);
-    }
-    this.GetTitle = function (name) {
-        return labels.ValueForKey(name);
-    }
-    this.AllTitleNames = function () {
-        var list = [];
-        for (var i = 0; i < labels.Count(); i++) {
-            list[i] = labels.KeyAt(i);
-        }
-        return list;
     }
     function defConv() {
         this.SetValue = function (ele, args) {
@@ -500,14 +492,12 @@ window.forms.IdentifiedForm = function (form) {
                     CallCS_DEBUG(srcEle, itemTitle, ags);
                 }
                 else {
-                    var title = self.GetTitle(title);
-                    if (!title) throw new Error("Title '" + title + "' undefined");
                     ags[0] = title;
                     window.CallCS(ags);
                 }
             }
             catch (err) {
-                alert(err.description + "(requestData)" + title);
+                alert("requestData failed:" + err.description + "(" + title + ")");
             }
         }
     } (this);
@@ -531,13 +521,11 @@ window.forms.IdentifiedForm = function (form) {
                     CallCS_DEBUG(ele, false, [fieldName, formID, window.FormOperations.Report, val]);
                 }
                 else {
-                    var title = self.GetTitle(fieldName);
-                    if (!title) throw new Error("Field '" + fieldName + "' undefined");
-                    window.CallCS([title, formID, window.FormOperations.Report, val]);
+                    window.CallCS([fieldName, formID, window.FormOperations.Report, val]);
                 }
             }
             catch (err) {
-                alert(err.description + "(reportField)");
+                alert("reportField failed:" + err.description);
             }
         };
     } (this);
@@ -563,7 +551,7 @@ window.forms.IdentifiedForm = function (form) {
                         args[i] = self.GetField(fields[i]);
                     }
                 }
-                self.requestData(ele, true, itemField, args); 
+                self.requestData(ele, true, itemField, args);
             }
         };
     } (this);
@@ -584,13 +572,12 @@ window.forms.IdentifiedForm = function (form) {
                 self.requestData(ele, false, ele.getAttribute("command"), args);
             }
             catch (err) {
-                alert(err.description + "(commit)");
+                alert("commit failed:" + err.description);
             }
         };
     } (this);
     var initField = function (self) {
         return function (ele) {
-            ele.__Form__init__ = true;
             var args = null;
             var condFields = ele.getAttribute("condFields");
             if (condFields) {
@@ -607,10 +594,12 @@ window.forms.IdentifiedForm = function (form) {
     } (this);
     var initFieldFilter = function (self, list) {
         return function (ele) {
+            var init = manageElement(ele, "formInit");
+            if (init.flag) return false;
+            init.flag = true;
             var field = ele.getAttribute("field");
             if (!field || field == "") return false;
             if (list[field]) return false; //避免重复请求同一字段。如果考虑给field增加子分类的概念，需结合子分类实现此功能
-            if (ele.__Form__init__) return false;
             if (ele.getAttribute("command") /* || ele.getAttribute("condFields")*/) return false;
 
             var localField = ele.getAttribute("localField");
@@ -713,23 +702,12 @@ var formCallCenter = function () {
                 var exist = false;
                 if (index > -1) {
                     var oldForm = forms.ValueForKey(formID);
-                    //这里应该考虑title集合问题
                     var oldEle = oldForm.GetForm();
                     if (!innerIframe(ele.ownerDocument.parentWindow, oldEle.ownerDocument.parentWindow)) {
-                        var list = form.AllTitleNames();
-                        for (var i = 0; i < list.length; i++) {
-                            var k = list[i];
-                            oldForm.SetTitle(k, form.GetTitle(k));
-                        }
                         form = oldForm;
                         exist = true;
                     }
                     else {
-                        var list = oldForm.AllTitleNames();
-                        for (var i = 0; i < list.length; i++) {
-                            var k = list[i];
-                            form.SetTitle(k, oldForm.GetTitle(k));
-                        }
                         oldForm.__unload__();
                     }
                 }

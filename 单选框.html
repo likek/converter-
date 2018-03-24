@@ -21,12 +21,12 @@
         };
         var modalityListStyle = {
             'displayMember': 'ModalityName', 'valueMember': 'ModalityCode',
-            'classSelectdItem': 'RadioListConv-SelectdItem',
-            'classUnselectdItem': 'RadioListConv-UnselectdItem',
-            'classSelectedLabel': 'RadioListConv-SelectedLabel',
-            'classUnselectedLabel': 'RadioListConv-UnselectedLabel',
-            'classSelectedText': 'RadioListConv-SelectedText',
-            'classUnselectedText': 'RadioListConv-UnselectedText',
+            'classSelectedItem': 'RadioButtonListConv-SelectedItem',
+            'classUnselectdItem': 'RadioButtonListConv-UnselectedItem',
+            'classSelectedLabel': 'RadioButtonListConv-SelectedLabel',
+            'classUnselectedLabel': 'RadioButtonListConv-UnselectedLabel',
+            'classSelectedText': 'RadioButtonListConv-SelectedText',
+            'classUnselectedText': 'RadioButtonListConv-UnselectedText'
         };
         var loginForm;
 
@@ -49,11 +49,10 @@
     设置单选值
 </button>
 
-<div field="ModalityList" itemfield="currModality" itemlocalfield="true"
-     conv="FIISForm.RadioListConv(modalityListStyle)"
-     requester="FIISForm.JSObjectRequester(modalityList)">
+<div field="ModalityList" itemfield="currModality"
+     conv="FIISForm.RadioButtonListConv(modalityListStyle)" valueChanged="valueChanged"
+     requester="FIISForm.JSObjectRequester(modalityList)"  itemRequester="FIISForm.JSObjectRequester(null)">
 </div>
-
 
 </body>
 </html>

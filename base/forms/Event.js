@@ -83,19 +83,13 @@ window.forms.Event.Unregister = function (ele, eventName, eventHandler) {
         }
     }
 }
-window.forms.Event.UnhookMouseEvent = function (root, eventName) {
-    if (!root || !root.ownerDocument || !eventName) return;
-    var body = root.__hook__body;
-    if (!body) return;
-    var evtVarName = "__hook__" + eventName;
-    window.forms.Event.Unregister(body, eventName, root[evtVarName]);
-    root[evtVarName] = undefined;
-    root.__hook__body = undefined;
-}
 window.forms.Event.HookMouseEvent = function (root, eventName, handler, mouseEventFilter) {
     if (!root || !root.ownerDocument || !eventName || !handler) return;
     var body = window.forms.Element(root).GetBody();
     if (!body) return;
+
+    var events = manageElement(root, "events");
+
     root.__hook__body = body;
     if (!mouseEventFilter) {
         mouseEventFilter = function (refEle, currEle) {
@@ -106,11 +100,10 @@ window.forms.Event.HookMouseEvent = function (root, eventName, handler, mouseEve
             return false;
         }
     };
-    var evtVarName = "__hook__" + eventName;
-    window.forms.Event.Unregister(body, eventName, root[evtVarName]);
-    root[evtVarName] = function () {
+    window.forms.Event.Unregister(body, eventName, events[eventName]);
+    events[eventName] = function () {
         if (!root.ownerDocument) {
-            window.forms.Event.Unregister(body, eventName, root[evtVarName]);
+            window.forms.Event.Unregister(body, eventName, root[eventName]);
         }
         else {
             var evt = window.forms.Event();
@@ -118,7 +111,16 @@ window.forms.Event.HookMouseEvent = function (root, eventName, handler, mouseEve
             handler(mouseEventFilter(root, src));
         }
     }
-    window.forms.Event.Register(body, eventName, root[evtVarName]);
+    window.forms.Event.Register(body, eventName, events[eventName]);
+}
+window.forms.Event.UnhookMouseEvent = function (root, eventName) {
+    if (!root || !root.ownerDocument || !eventName) return;
+    var body = root.__hook__body;
+    if (!body) return;
+    var events = manageElement(root, "events");
+    window.forms.Event.Unregister(body, eventName, events[eventName]);
+    delete events[eventName];
+    delete root.__hook__body;
 }
 window.forms.Event.ObserveOnce = function (ele, eventName, eventHandler) {
     var reg = function () {

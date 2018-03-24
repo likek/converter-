@@ -1,3 +1,4 @@
+//静态数据conv，给定field以指定值
 window.forms.StaticValueConv = function (val) {
     window.forms.SingleValueConv.apply(this);
     this.ApplyValue = function (ele, value) {
@@ -6,6 +7,7 @@ window.forms.StaticValueConv = function (val) {
         return val;
     }
 }
+//前端conv，以前端数据作为字段值
 window.forms.FrontValueConv = function (impl) {
     if (typeof (impl) == "function") {
         var args = [];
@@ -16,15 +18,21 @@ window.forms.FrontValueConv = function (impl) {
         impl.apply(obj, args);
         impl = obj;
     }
-    if (!impl || typeof (impl) != 'object') impl = new window.forms.SingleValueConv();
+    if (!impl || typeof (impl) != 'object') {
+        impl = {};
+        window.forms.SingleValueConv.apply(impl, args);
+    }
+    impl.GetValue = impl.GetUIValue;
+
     this.CompareValues = impl.CompareValues;
     this.DetermineApply = impl.DetermineApply;
     this.DecodeArguments = impl.DecodeArguments;
     this.SetValue = impl.SetValue;
-    this.GetValue = impl.GetUIValue;
+    this.GetValue = impl.GetValue;
     this.GetUIValue = impl.GetUIValue;
     this.ApplyValue = impl.ApplyValue;
 }
+//缓存conv，只做数据缓存不做UI展现
 window.forms.CacheValueConv = function (impl) {
     if (typeof (impl) == "function") {
         var args = [];
@@ -35,16 +43,23 @@ window.forms.CacheValueConv = function (impl) {
         impl.apply(obj, args);
         impl = obj;
     }
-    if (!impl || typeof (impl) != 'object') impl = new window.forms.SingleValueConv();
+    if (!impl || typeof (impl) != 'object') {
+        impl = {};
+        window.forms.SingleValueConv.apply(impl, args);
+    }
+    impl.GetUIValue = impl.GetValue;
+    impl.ApplyValue = function (ele, value) {
+    }
+
     this.CompareValues = impl.CompareValues;
     this.DetermineApply = impl.DetermineApply;
     this.DecodeArguments = impl.DecodeArguments;
     this.SetValue = impl.SetValue;
     this.GetValue = impl.GetValue;
-    this.GetUIValue = impl.GetValue;
-    this.ApplyValue = function (ele, value) {
-    }
+    this.GetUIValue = impl.GetUIValue;
+    this.ApplyValue = impl.ApplyValue;
 }
+//函数取值conv
 window.forms.FuncValueConv = function (func) {
     window.forms.SingleValueConv.apply(this);
     this.ApplyValue = function (ele, value) {
@@ -53,6 +68,7 @@ window.forms.FuncValueConv = function (func) {
         return func(ele);
     }
 }
+//操作conv
 window.forms.ActionValueConv = function (repeat, action) {
     window.forms.SingleValueConv.apply(this);
     if (repeat) {
@@ -64,9 +80,12 @@ window.forms.ActionValueConv = function (repeat, action) {
         action(value);
     }
 }
+//下拉列表conv
 window.forms.ListViewConv = function (userInput, filter, style) {
     window.forms.ListValueConv.apply(this, [style]);
-    this.GetUIValue = this.GetValue
+    this.GetUIValue = function (self) {
+        return function (ele) { return self.GetValue(ele); }
+    } (this);
     var mnu;
     var applyValue = this.ApplyValue;
     this.ApplyValue = function (ele, value) {
@@ -105,6 +124,85 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                     unfold.style.cssFloat = 'right';
                     unfold.style.margin = -2.5 * size + "px " + size + "px 0 0";
                     ele.appendChild(unfold);
+
+                    function getImplItem(selectFirstItem) {
+                        var t = window.forms.Element(txt).GetText();
+                        var selection = null;
+                        var bindedFlag = false;
+                        var binded = null;
+                        var data = self.GetValue(ele);
+                        if (data) {
+                            //绝对相等
+                            for (var i = 0; i < data.length; i++) {
+                                if (data[i][style.displayMember] == t) {
+                                    if (!bindedFlag) {
+                                        bindedFlag = true;
+                                        var itemField = ele.getAttribute("itemField");
+                                        if (itemField && itemField.length > 0) {
+                                            var form = formCallCenter.DetectFormByElement(ele);
+                                            binded = form.GetField(itemField);
+                                        }
+                                    }
+                                    if (data[i] == binded) return binded;
+                                    selection = data[i];
+                                    break;
+                                }
+                            }
+                            if (!selection) {
+                                if (selectFirstItem) {
+                                    //过滤规则
+                                    if (typeof (filter) == "function") {
+                                        for (var i = 0; i < data.length; i++) {
+                                            if (filter(data[i], t)) {
+                                                if (!bindedFlag) {
+                                                    bindedFlag = true;
+                                                    var itemField = ele.getAttribute("itemField");
+                                                    if (itemField && itemField.length > 0) {
+                                                        var form = formCallCenter.DetectFormByElement(ele);
+                                                        binded = form.GetField(itemField);
+                                                    }
+                                                }
+                                                if (data[i] == binded) return binded;
+                                                selection = data[i];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (!selection) {
+                                if (userInput) {
+                                    var displayMember = ele.getAttribute("displayMember");
+                                    var valueMember = ele.getAttribute("valueMember");
+                                    var value = {};
+                                    value[valueMember] = null;
+                                    value[displayMember] = t;
+                                    selection = value;
+                                }
+                            }
+                            if (!selection) {
+                                if (!bindedFlag) {
+                                    bindedFlag = true;
+                                    var itemField = ele.getAttribute("itemField");
+                                    if (itemField && itemField.length > 0) {
+                                        var form = formCallCenter.DetectFormByElement(ele);
+                                        binded = form.GetField(itemField);
+                                    }
+                                }
+                                selection = binded;
+                            }
+                            if (!selection) {
+                                var displayMember = ele.getAttribute("displayMember");
+                                var valueMember = ele.getAttribute("valueMember");
+                                var value = {};
+                                value[valueMember] = null;
+                                value[displayMember] = null;
+                                selection = value;
+                            }
+                        }
+                        return selection;
+                    }
+
                     mnu = new Menu(ele, style);
                     var hide = mnu.Hide;
                     var show = mnu.Show;
@@ -122,8 +220,8 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                         show();
                         window.forms.Event.HookMouseEvent(ele, "mousedown",
                                 function (f) {
-                                    if (f) {
-                                        if (userInput) setItemField(getInputData());
+                                    if (!f) {
+                                        setItemField(getImplItem());
                                         mnu.Hide();
                                     }
                                 },
@@ -131,10 +229,10 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                                     var e = mnu.GetElement();
                                     var sur = window.forms.Event.Source();
                                     while (sur) {
-                                        if (sur == e) return false;
+                                        if (sur == e || sur == ele) return true;
                                         sur = sur.parentNode;
                                     }
-                                    return true;
+                                    return false;
                                 })
                     }
                     var drawRow = mnu.drawRow;
@@ -143,10 +241,12 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                         e.className = style.classItem;
                         e.title = d[style.displayMember];
                         window.forms.Element(e).SetText(d[style.displayMember]);
-                        e.onclick = function () {
-                            setItemField(d);
-                            mnu.Hide();
-                        }
+                        e.onclick = function (e) {
+                            return function () {
+                                setItemField(e.__currData);
+                                mnu.Hide();
+                            }
+                        } (e);
                     }
                     ele.onclick = function () {
                         if (!mnu.Visible()) {
@@ -158,59 +258,18 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                             }
                             mnu.Show();
                         }
-                        else {
-                            if (window.forms.Event.Source() == unfold) mnu.Hide();
-                        }
-                    }
-                    function getInputData() {
-                        var t = window.forms.Element(txt).GetText();
-                        var n = 0;
-                        var selection = {};
-                        var data = self.GetValue(ele);
-                        if (data) {
-                            for (var i = 0; i < data.length; i++) {
-                                if (data[i][style.displayMember] == t) {
-                                    selection = data[i];
-                                    n++;
-                                }
-                            }
-                        }
-                        if (n != 1) {
-                            selection[style.valueMember] = null;
-                            selection[style.displayMember] = t;
-                        }
-                        return selection;
                     }
                     if (typeof (filter) == "function") {
                         txt.onchange = function () {
-                            if (userInput) setItemField(getInputData());
+                            setItemField(getImplItem());
                             mnu.Hide();
-                        }
-                        var checkSelection = function () {
-                            var t = window.forms.Element(txt).GetText();
-                            var selection = null;
-                            var data = self.GetValue(ele);
-                            if (data) {
-                                for (var i = 0; i < data.length; i++) {
-                                    if (filter(data[i], t)) {
-                                        selection = data[i];
-                                        break;
-                                    }
-                                }
-                            }
-                            if (selection) {
-                                setItemField(selection);
-                            }
-                            else {
-                                if (userInput) setItemField(getInputData());
-                            }
                         }
                         txt.onkeyup = function () {
                             var key = window.forms.Event.KeyCode();
                             switch (key) {
                                 case 13:
                                     {
-                                        checkSelection();
+                                        setItemField(getImplItem(true));
                                         mnu.Hide();
                                     }
                                     break;
@@ -239,24 +298,19 @@ window.forms.ListViewConv = function (userInput, filter, style) {
             }
         }
     } (this);
+    var inherit = this.InheritProperties;
     this.InheritProperties = function (srcElement, desElement) {
         window.forms.Form.SetAttribute(desElement, "conv", "window.forms.ListViewConv.ListViewItemValueConv(" + (style ? style.getJsonRaw() : null) + ")", true);
-        window.forms.Form.InheritAttributes(srcElement, desElement);
+        return inherit(srcElement, desElement);
     }
-    window.forms.ListViewConv.ListViewItemValueConv = function () {
+    window.forms.ListViewConv.ListViewItemValueConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1;
+            return 1; //可手输下拉框需要，应结合GetUIValue，改为return val1==val2?0:1;
         }
-        this.GetUIValue = this.GetValue = function (ele) {
-            if (ele.__bindedData) return ele.__bindedData;
-            var displayMember = ele.getAttribute("displayMember");
-            var valueMember = ele.getAttribute("valueMember");
-            var value = {};
-            value[valueMember] = null;
-            value[displayMember] = null;
-            return value;
-        }
+        this.GetUIValue = function (self) {
+            return function (ele) { return self.GetValue(ele); }
+        } (this);
         this.ApplyValue = function (ele, value) {
             var displayMember = ele.getAttribute("displayMember");
             var text = value ? value[displayMember] : "";
@@ -265,9 +319,11 @@ window.forms.ListViewConv = function (userInput, filter, style) {
         }
     }
 }
+//下拉列表conv，不可手录筛选
 window.forms.DropDownListConv = function (style) {
     window.forms.ListViewConv.apply(this, [false, null, style]);
 }
+//可筛选列表conv
 window.forms.FilterableListConv = function (userInput, style) {
     function filter(d, test) {
         test = test ? test.toLowerCase() : "";
@@ -281,14 +337,143 @@ window.forms.FilterableListConv = function (userInput, style) {
     }
     window.forms.ListViewConv.apply(this, [userInput, filter, style]);
 }
+//表格conv
+window.forms.TableViewConv = function (style) {
+    window.forms.ListValueConv.apply(this, [style]);
+    this.CompareValues = function (val1, val2) {
+        return val1 == val2 ? 0 : 1;
+    };
+    this.GetUIValue = function (self) {
+        return function (ele) { return self.GetValue(ele); }
+    } (this);
+    var table;
+    var applyValue = this.ApplyValue;
+    this.ApplyValue = function (ele, value) {
+        applyValue(ele, value);
+        if (table) table.Refresh();
+    };
+    this.ApplyItem = function (self) {
+        return function (ele, list, index) {
+            if (index == -1) {
+                self.__fieldElement = ele;
+                if (!table) {
+                    var tableContainer = ele.ownerDocument.createElement('div');
+                    self.__itemFieldElement = tableContainer;
+                    ele.appendChild(tableContainer);
+                    tableContainer.style.height = 'inherit';
+                    tableContainer.style.width = 'inherit';
+                    table = new TableView(tableContainer, style);
 
+                    var drawHeaderRow = table.drawHeaderRow;
+                    var drawContentRow = table.drawContentRow;
+                    var drawHeaderCell = table.drawHeaderCell;
+                    var drawContentCell = table.drawContentCell;
+                    table.drawHeaderRow = function (doc, e, columns, style) {
+                        e.__currData = columns;
+                        drawHeaderRow(doc, e, columns, style);
+                        self.drawHeaderRow(doc, e, columns, style);
+                        if (typeof (style.drawHeaderRow) == "function") style.drawHeaderRow(doc, e, columns, style);
+                    }
+                    table.drawContentRow = function (doc, e, columns, ri, row, style) {
+                        e.__currData = row;
+                        drawContentRow(doc, e, columns, ri, row, style);
+                        self.drawContentRow(doc, e, columns, ri, row, style);
+                        if (typeof (style.drawContentRow) == "function") style.drawContentRow(doc, e, columns, ri, row, style);
+                    }
+                    table.drawContentCell = function (doc, e, ri, r, ci, c, style) {
+                        drawContentCell(doc, e, ri, r, ci, c, style);
+                        self.drawContentCell(doc, e, ri, r, ci, c, style);
+                        if (typeof (style.drawContentCell) == "function") style.drawContentCell(doc, e, ri, r, ci, c, style);
+                    }
+                    table.drawHeaderCell = function (doc, e, ci, c, style) {
+                        drawHeaderCell(doc, e, ci, c, style);
+                        self.drawHeaderCell(doc, e, ci, c, style);
+                        if (typeof (style.drawContentCell) == "function") style.drawHeaderCell(doc, e, ci, c, style);
+                    }
+                }
+                var columns = style.columns;
+                table.Columns().Clear();
+                for (var i = 0; i < columns.length; i++) {
+                    table.Columns().Add(columns[i]);
+                }
+                table.Rows().Clear();
+                self.InheritProperties(ele, ele.children[0]);
+            }
+            else {
+                table.Rows().Add(list[index]);
+            }
+        }
+    } (this);
+    this.drawHeaderRow = function (doc, e, columns, style) { };
+    this.drawContentRow = function (self) {
+        return function (doc, e, columns, ri, row, style) {
+            if (row) {
+                var ele = self.__itemFieldElement;
+                var conv = window.forms.Element(ele).GetObject("conv");
+                var valueMember = ele.getAttribute("valueMember");
+                var selectedExamOrder = conv.GetValue(ele);
+                if (selectedExamOrder && row[valueMember] == selectedExamOrder[valueMember]) {
+                    e.className = style.classSelectedRow;
+                }
+                else {
+                    e.className = style.classUnselectedRow;
+                }
+            } else {
+                e.className = style.classUnselectedRow;
+            }
+            var events = manageElement(e, "tableView", "events");
+            window.forms.Event.Unregister(e, "mousedown", events.RowClick);
+            events.RowClick = function () {
+                var ele = self.__itemFieldElement;
+                var field = ele.getAttribute("field");
+                if (!field || field == "") return;
+                var form = formCallCenter.DetectFormByElement(ele);
+                form.SetField(field, [row], true);
+            }
+            window.forms.Event.Register(e, "mousedown", events.RowClick);
+        }
+    } (this);
+    this.drawContentCell = function (doc, e, ci, c, style) { };
+    this.drawHeaderCell = function (doc, e, ci, c, style) { };
+    var inherit = this.InheritProperties;
+    this.InheritProperties = function (srcElement, desElement) {
+        window.forms.Form.SetAttribute(desElement, "conv", "window.forms.TableViewConv.TableViewItemValueConv(" + (style ? style.getJsonRaw() : null) + ")", true);
+        return inherit(srcElement, desElement);
+    }
+    window.forms.TableViewConv.TableViewItemValueConv = function (style) {
+        window.forms.SingleValueConv.apply(this);
+        this.CompareValues = function (val1, val2) {
+            return val1 == val2 ? 0 : 1;
+        }
+        this.GetUIValue = function (self) {
+            return function (ele) { return self.GetValue(ele); }
+        } (this);
+        this.ApplyValue = function (ele, value) {
+            var valueMember = ele.getAttribute("valueMember");
+            var rows = ele.children[0].children[1].children[0].children[0].children;
+            for (var i = 1, l = rows.length; i < l; i++) {
+                var e = rows[i];
+                if ((e.__currData == value) || (valueMember && e.__currData && value && e.__currData[valueMember] == value[valueMember])) {
+                    e.className = style.classSelectedRow;
+                }
+                else {
+                    e.className = style.classUnselectedRow;
+                }
+            }
+        }
+    };
+};
 window.forms.TileListConv = function (style) {
     window.forms.ListValueConv.apply(this, [style]);
-    this.GetUIValue = this.GetValue;
+    this.GetUIValue = function (self) {
+        return function (ele) { return self.GetValue(ele); }
+    } (this);
     var applyValue = this.ApplyValue;
     this.ApplyValue = function (ele, value) {
         if (style) {
+            if (!ele.getAttribute("inputMember")) ele.setAttribute("inputMember", style.inputMember);
             if (!ele.getAttribute("displayMember")) ele.setAttribute("displayMember", style.displayMember);
+            if (!ele.getAttribute("valueMember")) ele.setAttribute("valueMember", style.valueMember);
         }
         applyValue(ele, value);
     }
@@ -325,21 +510,69 @@ window.forms.TileListConv = function (style) {
             }
             else {
                 var e = root.children[index];
-                if (e.__currData == list[index]) return;
                 e.className = style.classItem;
                 e.__currData = list[index];
                 window.forms.Element(e).SetText(list[index][root.getAttribute("displayMember")]);
             }
         }
     } (this);
+    var inherit = this.InheritProperties;
     this.InheritProperties = function (srcElement, desElement) {
         window.forms.Form.SetAttribute(desElement, "conv", "window.forms.TileListConv.TileListItemConv(" + (style ? style.getJsonRaw() : null) + ")", true);
-        window.forms.Form.InheritAttributes(srcElement, desElement);
+        return inherit(srcElement, desElement);
     }
     window.forms.TileListConv.TileListItemConv = function (style) {
         window.forms.SingleValueConv.apply(this);
-        this.GetUIValue = this.GetValue;
+        this.GetUIValue = function (self) {
+            return function (ele) { return self.GetValue(ele); }
+        } (this);
         this.ApplyValue = function (ele, value) {
+            for (var i = 0; i < ele.children.length; i++) {
+                ele.children[i].style.color = ele.children[i].__currData == value ? "red" : "black";
+            }
         }
     }
 }
+window.forms.RadioButtonListConv = function (style) {
+    window.forms.TileListConv.apply(this, [style]);
+    var inherit = this.InheritProperties;
+    this.InheritProperties = function (srcElement, desElement) {
+        window.forms.Form.SetAttribute(desElement, "conv", "window.forms.RadioButtonListConv.RadioListItemConv(" + (style ? style.getJsonRaw() : null) + ")", true);
+        return inherit(srcElement, desElement);
+    }
+    window.forms.RadioButtonListConv.RadioListItemConv = function (style) {
+        window.forms.TileListConv.TileListItemConv.apply(this, [style]);
+        this.ApplyValue = function (ele, value) {
+            var valueMember = ele.getAttribute("valueMember");
+            for (var i = 0; i < ele.children.length; i++) {
+                var e = ele.children[i];
+                var label;
+                var text;
+                if (e.children.length != 2) {
+                    e.innerHTML = "";
+                    label = ele.ownerDocument.createElement('span');
+                    text = ele.ownerDocument.createElement('span');
+                    e.style.cursor = 'pointer';
+                    e.style.display = label.style.display = text.style.display = 'inline-block';
+                    label.style.verticalAlign = text.style.verticalAlign = 'middle';
+                    e.appendChild(label);
+                    e.appendChild(text);
+                }
+                else {
+                    label = e.children[0];
+                    text = e.children[1];
+                }
+                window.forms.Element(text).SetText(e.__currData ? e.__currData[ele.getAttribute("displayMember")] : "");
+                if (e.__currData == value || (valueMember && e.__currData && value && e.__currData[valueMember] == value[valueMember])) {
+                    e.className = style.classSelectedItem;
+                    label.className = style.classSelectedLabel;
+                    text.className = style.classSelectedText;
+                } else {
+                    e.className = style.classUnselectdItem;
+                    label.className = style.classUnselectedLabel;
+                    text.className = style.classUnselectedText;
+                }
+            }
+        };
+    }
+};

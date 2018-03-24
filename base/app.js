@@ -15,8 +15,6 @@
 }
 
 window.forms.IdentifiedForm.DEBUG = 1;
-window.forms.ServiceUrl = '/FIISServices.ashx';
-var loginRequester = { 'ServiceUrl': window.forms.ServiceUrl, 'Catalog': 'FIIS.LoginService', 'Item': 'Login' };
 function navigateRequester() {
     this.Request = function (form, args, callback) {
         var module = args[1];
@@ -30,6 +28,6 @@ function navigateHandler() {
         return true;
     }
     this.ApplyValue = function (ele, value) {
-        window.forms.Element(ele).GetWindow().location.href = value;
+        window.forms.Element(ele).GetWindow().parent.location.href = value;
     }
 }

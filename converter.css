@@ -1,12 +1,30 @@
-
-/* Conv - 单选框 - 默认 */
-.RadioListConv-UnselectdItem,.RadioListConv-SelectdItem{
-    margin: 0 6px;
+/* conv - 单选框 */
+.RadioButtonListConv-UnselectedItem,.RadioButtonListConv-SelectedItem{
+    box-sizing: border-box;
+    padding-right: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-.RadioListConv-UnselectedLabel,.RadioListConv-SelectedLabel{
+.RadioButtonListConv-UnselectedLabel{
     margin-right: 6px;
+    background-color:#fff;
+    border:1px solid #aaa;
+    width:16px;
+    height:16px;
+    box-sizing:border-box;
+    border-radius:50%;
 }
-.RadioListConv-UnselectedText,.RadioListConv-SelectedText{
+.RadioButtonListConv-SelectedLabel{
+    margin-right: 6px;
+    background-color:#000;
+    border:5px solid #ccc;
+    width:16px;
+    height:16px;
+    box-sizing:border-box;
+    border-radius:50%;
+}
+.RadioButtonListConv-UnselectedText,.RadioButtonListConv-SelectedText{
     vertical-align: bottom;
 }
 /* Conv - 多选框 - 默认 */

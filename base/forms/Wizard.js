@@ -4,11 +4,11 @@ if (!window.setTimeout.__impl) {
         return function (code, timeout) {
             if (typeof (code) != 'function') code = eval("(function () {" + code + "; })");
             var func = function () {
-                window.clearTimeout(arguments.callee.id);
-                delete arguments.callee.id;
+                window.clearTimeout(arguments.callee.__tm__id);
+                delete arguments.callee.__tm__id;
                 code();
             }
-            return func.id = to(func, timeout);
+            return func.__tm__id = to(func, timeout);
         }
     } (window.setTimeout);
     window.setTimeout = func;
@@ -41,7 +41,7 @@ function parseUrl(url) {
     var params = split[split.length - 1].split("&");
     for (var i = 0; i < params.length; i++) {
         var nv = params[i].split("=");
-        result.Parameters[nv[0]] = nv[1];
+        result.Parameters[nv[0]] = decodeURIComponent(nv[1]);
     }
     return result;
 }
@@ -66,7 +66,8 @@ function messageBox(msg, title, button) {
     window.alert(m);
 }
 window.forms.Element = function (ele) {
-    if (ele.__element) return ele.__element;
+    var element = manageElement(ele, "formElement");
+    if (element.impl) return element.impl;
     if (!window.forms.Element.helper) {
         window.forms.Element.helper = new function () {
             function getTextByTextContent(e) {
@@ -95,7 +96,6 @@ window.forms.Element = function (ele) {
 
             function defFormat(text) {
                 if (text != 0) text = text ? text : "";
-                if (text == "未定义") text = "";
                 return text;
             }
             this.SetText = function (e, text, format) {
@@ -151,12 +151,14 @@ window.forms.Element = function (ele) {
                 return e.innerHTML;
             }
             this.GetWindow = function (e) {
-                if (!e.__window) e.__window = window.formRoot(e);
-                return e.__window;
+                var element = manageElement(e, "formElement");
+                if (!element.window) element.window = window.formRoot(e);
+                return element.window;
             }
             this.GetDocument = function (e) {
-                if (!e.__document) e.__document = window.formRoot(e).document;
-                return e.__document;
+                var element = manageElement(e, "formElement");
+                if (!element.document) element.document = window.formRoot(e).document;
+                return element.document;
             }
             this.GetBody = function (e) {
                 if (!e.ownerDocument) return null;
@@ -239,11 +241,11 @@ window.forms.Element = function (ele) {
                 }
             } (this);
             this.GetObject = function (e, objAttrName, defCotr) {
+                var objects = manageElement(e, "formAttributes", "objects");
                 var objName = e.getAttribute(objAttrName);
-                var __objectName = "__object_" + objAttrName;
-                var __objectNameStr = __objectName + "_str";
-                if (e[__objectName] && e[__objectNameStr] == objName) return e[__objectName];
-                e[__objectNameStr] = objName;
+                if (!objName) objName = "";
+                var objNameStr = objName;
+                if (window.forms.object.Compare(objects.names[objAttrName], objNameStr) == 0) return objects.values[objAttrName];
                 var dgt = null;
                 var objectParams = "()";
                 if (objName) {
@@ -273,8 +275,9 @@ window.forms.Element = function (ele) {
                     catch (err) { }
                 }
                 if (!dgt) dgt = defCotr;
-                e[__objectName] = typeof (dgt) == 'function' ? eval("new dgt" + objectParams) : dgt;
-                return e[__objectName];
+                objects.values[objAttrName] = typeof (dgt) == 'function' ? eval("new dgt" + objectParams) : dgt;
+                objects.names[objAttrName] = objNameStr;
+                return objects.values[objAttrName];
             }
             return this;
         } ();
@@ -331,8 +334,8 @@ window.forms.Element = function (ele) {
             return window.forms.Element.helper.GetObject(ele, objAttrName, defValue);
         }
     }
-    ele.__element = new cotr(ele);
-    return ele.__element;
+    element.impl = new cotr(ele);
+    return element.impl;
 }
 window.formRoot = function (ele) {
     var p = window;
@@ -381,28 +384,38 @@ window.forms.object.Compare = function (obj1, obj2) {
     }
     else {
         if (typeof (obj1) == typeof (obj2)) {
-            if (obj1 == obj2) return 0;
-
             if (obj1) {
-                if (obj1.localeCompare) return obj1.localeCompare(obj2);
-                if (obj1.CompareTo) {
-                    var c = obj1.CompareTo(obj2);
-                    if (typeof (c) == 'number') return c;
+                if (obj2) {
+                    if (obj1 == obj2) return 0;
+                    if (obj1.localeCompare) return obj1.localeCompare(obj2);
+                    if (obj1.CompareTo) {
+                        var c = obj1.CompareTo(obj2);
+                        if (typeof (c) == 'number') return c;
+                    }
+                    if (obj2.localeCompare) return -obj2.localeCompare(obj1);
+                    if (obj2.CompareTo) {
+                        var c = obj2.CompareTo(obj1);
+                        if (typeof (c) == 'number') return -c;
+                    }
+
+                    for (var k in obj1) {
+                        var c = window.forms.object.Compare(obj1[k], obj2[k]);
+                        if (c) return c;
+                    }
+                    return -1;
+                }
+                else {
+                    return 1;
                 }
             }
-
-            if (obj2) {
-                if (obj2.localeCompare) return obj2.localeCompare(obj1);
-                if (obj2.CompareTo) {
-                    var c = obj2.CompareTo(obj1);
-                    if (typeof (c) == 'number') return -c;
+            else {
+                if (obj2) {
+                    return -1;
+                }
+                else {
+                    return 0;
                 }
             }
-
-            x = obj1 + "";
-            y = obj2 + "";
-            if (x != y) return x > y ? 1 : -1;
-            return -1;
         }
         else {
             return typeof (x) > typeof (y) ? 1 : -1;

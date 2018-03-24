@@ -53,7 +53,7 @@
             }
         }
         catch (err) {
-            throw new Error("The service is unavailable");
+            throw new Error("Service is unavailable:" + err.description);
         }
     }
     this.GetValue = function () {
@@ -66,7 +66,7 @@
             }
         }
         catch (err) {
-            throw new Error("Service is unavailable");
+            throw new Error("Service is unavailable:" + err.description);
         }
     }
     this.Release = function () {

@@ -1,12 +1,14 @@
 ﻿function ListView(root, style, updateCall) {
-    if (!root._lvImpl) {
+    var listView = manageElement(root, "listView");
+    impl = listView.impl;
+    if (!impl) {
         if (!style) {
             style = { "displayMember": "Description" };
         }
         else {
             if (!style.displayMember) style.displayMember = "Description";
         }
-        root._lvImpl = new function (root) {
+        impl = listView.impl = new function (root) {
             var eleContent = null;
             var derived;
             var data = [];
@@ -296,27 +298,28 @@
             this.GetElement = function () {
                 return root;
             }
-            window.forms.Event.Unregister(eleContent, "scroll", eleContent.lvScroll);
-            eleContent.lvScroll = function () { refresh(0); }
-            window.forms.Event.Register(eleContent, "scroll", eleContent.lvScroll);
+            var events = manageElement(eleContent, "events");
+            window.forms.Event.Unregister(eleContent, "scroll", events["scroll"]);
+            events["scroll"] = function () { refresh(0); }
+            window.forms.Event.Register(eleContent, "scroll", events["scroll"]);
         } (root, this);
     }
-    root._lvImpl.setDerived(this);
-    this.preLayout = root._lvImpl.preLayout;
-    this.sufLayout = root._lvImpl.sufLayout;
-    this.viewRange = root._lvImpl.viewRange;
-    this.Refresh = root._lvImpl.Refresh;
-    this.GetElement = root._lvImpl.GetElement;
-    this.Insert = root._lvImpl.Insert;
-    this.Add = root._lvImpl.Add;
-    this.RemoveAt = root._lvImpl.RemoveAt;
-    this.Remove = root._lvImpl.Remove;
-    this.IndexOf = root._lvImpl.IndexOf;
-    this.ItemAt = root._lvImpl.ItemAt;
-    this.Contains = root._lvImpl.Contains;
-    this.Clear = root._lvImpl.Clear;
-    this.Count = root._lvImpl.Count;
-    this.Bind = root._lvImpl.Bind;
+    impl.setDerived(this);
+    this.preLayout = impl.preLayout;
+    this.sufLayout = impl.sufLayout;
+    this.viewRange = impl.viewRange;
+    this.Refresh = impl.Refresh;
+    this.GetElement = impl.GetElement;
+    this.Insert = impl.Insert;
+    this.Add = impl.Add;
+    this.RemoveAt = impl.RemoveAt;
+    this.Remove = impl.Remove;
+    this.IndexOf = impl.IndexOf;
+    this.ItemAt = impl.ItemAt;
+    this.Contains = impl.Contains;
+    this.Clear = impl.Clear;
+    this.Count = impl.Count;
+    this.Bind = impl.Bind;
     this.createRow = function (doc, index, d) {
         var tr = doc.createElement("DIV");
         var td = doc.createElement("DIV");
@@ -343,6 +346,7 @@ function TableView(root, style, updateCall) {
         if (!style.widthMember) style.widthMember = "Width";
     }
     ListView.call(this, root, style, updateCall);
+    var impl = manageElement(root, "listView").impl;
 
     this.preLayout = function (root) {
         var eleContent = root.lvTable.parentNode;
@@ -374,11 +378,10 @@ function TableView(root, style, updateCall) {
                 return self.createHeaderRow(doc, d);
             }
             else {
-                return self.createContentRow(doc, index, d);
+                return self.createContentRow(doc, index - 1, d);
             }
         }
     } (this);
-    var nn1 = false;
     this.createHeaderRow = function (doc, d) {
         var tr = doc.createElement("DIV");
         tr.style.overflow = "hidden";
@@ -389,8 +392,8 @@ function TableView(root, style, updateCall) {
         tr.style.overflow = "hidden";
         return tr;
     }
-    if (!root._lvImpl._tvColumns) {
-        root._lvImpl._tvColumns = new function (lv) {
+    if (!impl._tvColumns) {
+        impl._tvColumns = new function (lv) {
             var columns = [];
             this.Add = function (self) {
                 return function (item) {
@@ -464,9 +467,9 @@ function TableView(root, style, updateCall) {
             lv.Add(columns);
         } (this);
     }
-    this.Columns = function () { return root._lvImpl._tvColumns; }
-    if (!root._lvImpl._tvRows) {
-        root._lvImpl._tvRows = new function (lv) {
+    this.Columns = function () { return impl._tvColumns; }
+    if (!impl._tvRows) {
+        impl._tvRows = new function (lv) {
             this.Add = function (self) {
                 return function (item) {
                     var cnt = lv.Count() - 1;
@@ -516,86 +519,92 @@ function TableView(root, style, updateCall) {
             }
         } (this);
     }
-    this.Rows = function () { return root._lvImpl._tvRows; }
+    this.Rows = function () { return impl._tvRows; }
     this.drawRow = function (lv) {
         return function (doc, e, ri, d, style) {
             if (ri == 0) {
-                var columns = d;
-
-                var header = root.tvHeader;
-                var tds = header.children;
-                for (var i = tds.length; i > columns.length; i--) {
-                    header.removeChild(tds[i - 1]);
-                }
-                for (var i = tds.length; i < columns.length; i++) {
-                    var td = doc.createElement("DIV");
-                    header.appendChild(td);
-                }
-                var left = 0;
-                for (var i = 0; i < columns.length; i++) {
-                    lv.drawColumnCell(doc, tds[i], i, columns[i], style);
-                    tds[i].style.display = "inline-block";
-                    tds[i].style.width = columns[i][style.widthMember] + "px";
-                    left += columns[i][style.widthMember];
-                }
-                header.className = style.classHeader;
-                header.style.width = header.parentNode.style.width = header.parentNode.parentNode.style.width = left + "px";
-
-                var eleHeader = header.parentNode.parentNode.parentNode;
-                var eleContent = root.lvTable.parentNode;
-                if (eleHeader.offsetWidth != eleContent.offsetWidth) eleHeader.style.width = eleContent.offsetWidth + "px";
-                if (eleHeader.scrollLeft != eleContent.scrollLeft) eleHeader.scrollLeft = eleContent.scrollLeft;
-
-
-                var tds = e.children;
-                for (var i = tds.length; i > columns.length; i--) {
-                    e.removeChild(tds[i - 1]);
-                }
-                for (var i = tds.length; i < columns.length; i++) {
-                    var td = doc.createElement("DIV");
-                    e.appendChild(td);
-                }
-                for (var i = 0; i < columns.length; i++) {
-                    lv.drawColumnCell(doc, tds[i], i, columns[i], style);
-                    tds[i].style.display = "inline-block";
-                    tds[i].style.width = columns[i][style.widthMember] + "px";
-                }
-                e.className = style.classHeader;
-                e.style.height = e.parentNode.children.length < 2 ? "1px" : "0px";
-                e.style.width = e.parentNode.style.width = e.parentNode.parentNode.style.width = left + "px";
+                lv.drawHeaderRow(doc, e, d, style);
             }
             else {
-                var columns = lv.ItemAt(0);
-                var row = d;
-                var tds = e.children;
-                for (var i = tds.length; i > columns.length; i--) {
-                    e.removeChild(tds[i - 1]);
-                }
-                for (var i = tds.length; i < columns.length; i++) {
-                    var td = doc.createElement("DIV");
-                    e.appendChild(td);
-                }
-
-                var tds = e.children;
-                var left = 0;
-                for (var i = 0; i < columns.length; i++) {
-                    lv.drawRowCell(doc, tds[i], ri - 1, row, i, columns[i], style);
-                    tds[i].style.display = "inline-block";
-                    tds[i].style.width = columns[i][style.widthMember] + "px";
-                    left += columns[i][style.widthMember];
-                }
-                e.className = style.classRow;
-                e.style.width = left + "px";
+                lv.drawContentRow(doc, e, lv.ItemAt(0), ri - 1, d, style);
             }
         }
     } (this);
-    this.drawColumnCell = function (doc, e, ci, c, style) {
+    this.drawHeaderRow = function (lv) {
+        return function (doc, e, columns, style) {
+            var header = root.tvHeader;
+            var tds = header.children;
+            for (var i = tds.length; i > columns.length; i--) {
+                header.removeChild(tds[i - 1]);
+            }
+            for (var i = tds.length; i < columns.length; i++) {
+                var td = doc.createElement("DIV");
+                header.appendChild(td);
+            }
+            var left = 0;
+            for (var i = 0; i < columns.length; i++) {
+                lv.drawHeaderCell(doc, tds[i], i, columns[i], style);
+                tds[i].style.display = "inline-block";
+                tds[i].style.width = columns[i][style.widthMember] + "px";
+                left += columns[i][style.widthMember];
+            }
+            header.className = style.classHeader;
+            header.style.width = header.parentNode.style.width = header.parentNode.parentNode.style.width = left + "px";
+
+            var eleHeader = header.parentNode.parentNode.parentNode;
+            var eleContent = root.lvTable.parentNode;
+            if (eleHeader.offsetWidth != eleContent.offsetWidth) eleHeader.style.width = eleContent.offsetWidth + "px";
+            if (eleHeader.scrollLeft != eleContent.scrollLeft) eleHeader.scrollLeft = eleContent.scrollLeft;
+
+
+            var tds = e.children;
+            for (var i = tds.length; i > columns.length; i--) {
+                e.removeChild(tds[i - 1]);
+            }
+            for (var i = tds.length; i < columns.length; i++) {
+                var td = doc.createElement("DIV");
+                e.appendChild(td);
+            }
+            for (var i = 0; i < columns.length; i++) {
+                lv.drawHeaderCell(doc, tds[i], i, columns[i], style);
+                tds[i].style.display = "inline-block";
+                tds[i].style.width = columns[i][style.widthMember] + "px";
+            }
+            e.className = style.classHeader;
+            e.style.height = e.parentNode.children.length < 2 ? "1px" : "0px";
+            e.style.width = e.parentNode.style.width = e.parentNode.parentNode.style.width = left + "px";
+        }
+    } (this);
+    this.drawContentRow = function (lv) {
+        return function (doc, e, columns, ri, row, style) {
+            var tds = e.children;
+            for (var i = tds.length; i > columns.length; i--) {
+                e.removeChild(tds[i - 1]);
+            }
+            for (var i = tds.length; i < columns.length; i++) {
+                var td = doc.createElement("DIV");
+                e.appendChild(td);
+            }
+
+            var tds = e.children;
+            var left = 0;
+            for (var i = 0; i < columns.length; i++) {
+                lv.drawContentCell(doc, tds[i], ri, row, i, columns[i], style);
+                tds[i].style.display = "inline-block";
+                tds[i].style.width = columns[i][style.widthMember] + "px";
+                left += columns[i][style.widthMember];
+            }
+            e.className = style.classRow;
+            e.style.width = left + "px";
+        }
+    } (this);
+    this.drawHeaderCell = function (doc, e, ci, c, style) {
         var desc = null == c ? "" : c[style.displayMember];
         window.forms.Element(e).SetText(desc);
         e.title = desc;
         e.className = style.classColumnCell;
     }
-    this.drawRowCell = function (doc, e, ri, r, ci, c, style) {
+    this.drawContentCell = function (doc, e, ri, r, ci, c, style) {
         var desc = r[c.Name];
         window.forms.Element(e).SetText(desc);
         e.title = desc;
@@ -609,7 +618,8 @@ function TableView(root, style, updateCall) {
     } (this, this.viewRange);
 }
 function Menu(mnuRoot, style, updateCall) {
-    var impl = mnuRoot.__menuImpl;
+    var menu = manageElement(mnuRoot, "menu");
+    var impl = menu.impl;
     if (!impl) {
         function menuImpl(root, style, updateCall) {
             if (!style) style = {};
@@ -667,7 +677,7 @@ function Menu(mnuRoot, style, updateCall) {
         root.style.display = "none";
         var body = window.forms.Element(mnuRoot).GetBody();
         body.appendChild(root);
-        impl = mnuRoot.__menuImpl = new menuImpl(root, style, updateCall);
+        impl = menu.impl = new menuImpl(root, style, updateCall);
     }
     this.Visible = impl.Visible;
     this.Show = impl.Show;
