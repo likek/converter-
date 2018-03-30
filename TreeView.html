@@ -1,0 +1,161 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        .classUnselectdNode,.classSelectdNode{
+            height: 26px;
+            overflow: hidden;
+            white-space: pre-wrap;
+            text-overflow: ellipsis;
+        }
+        .classUnselectdNode .classNodeText,.classSelectdNode .classNodeText{
+            border-radius: 3px;
+            padding: 0 3px;
+            height: 24px;
+            line-height: 24px;
+        }
+        .classUnselectdNode .classNodeText{
+            background: #ddd;
+        }
+        .classSelectdNode .classNodeText{
+            background: #0f0;
+        }
+    </style>
+    <script src="forms/install.js"></script>
+    <script src="app/FIIS.js"></script>
+    <script src="app/app.js"></script>
+    <script src="TreeView.js"></script>
+    <script src="TreeViewConv.js"></script>
+
+    <script>
+        var data = [
+            {
+                text: "ppp1",
+                nodes: [{
+                    text:'ccc1_1',
+                },{
+                    text:"ccc1_2",
+                }],
+            } , {
+                text: 'ppp3',
+            },
+            {
+                text: 'ppp2',
+                nodes: [{
+                    text:'ccc2_1',
+                },{
+                    text:"ccc2_2",
+                    nodes:[
+                        {
+                            text:'ccc2_2_1',
+                        },
+                        {
+                            text:'ccc2_2_2',
+                        }
+                    ]
+                }],
+            },
+        ];
+        var treeStyle = {
+            displayMember:'text',childNodesMember:'nodes',
+
+            classUnselectdNode:'classUnselectdNode',
+            classSelectdNode:"classSelectdNode",
+            // classOpenIcon:'classOpenIcon',
+            // classCloseIcon:'classCloseIcon',
+            classNodeText:'classNodeText',
+            // offset:'9px',
+        };
+
+        function init() {
+            var form = new TreeTestForm(document.body);
+            form.SetField('treeData',[{
+                ErrorCode:'0000',
+                Result:data,
+            }]);
+        }
+
+
+        function TreeTestForm() {
+            FIISForm.apply(this, arguments);
+            var titles = {
+            };
+            for (var t in titles) {
+                this.SetTitle(t, titles[t]);
+            }
+        }
+
+        function getCurrNodeData() {
+            var form = new TreeTestForm(document.body);
+            var d= form.GetField('currNodeData');
+            try{
+                alert(d.getJsonRaw());
+            }catch(e) {
+                alert(d);
+            }
+        }
+        function deleteCurrNode() {
+            var trv = document.getElementById('treeBox').__treeView;
+            var currNode = trv.getSelectedNode();
+            if(currNode){
+                trv.remove(currNode);
+            }
+        }
+        function updateCurrNode() {
+            var trv = document.getElementById('treeBox').__treeView;
+            var currNode = trv.getSelectedNode();
+            if(currNode){
+                var newdata = {
+                    text:'newText',
+                    nodes:[
+                        {text:'newNode'},
+                    ]
+                };
+                trv.update(currNode,newdata);
+            }
+        }
+        function updateCurrNodeText() {
+            var trv = document.getElementById('treeBox').__treeView;
+            var currNode = trv.getSelectedNode();
+            if(currNode){
+                trv.update(currNode,'newText111');
+            }
+        }
+
+        function insertChildNodes() {
+            var trv = document.getElementById('treeBox').__treeView;
+            var currNode = trv.getSelectedNode();
+            if(currNode){
+                trv.addChildNodes(currNode,[{
+                    text:'newText',
+                    nodes:[
+                        {
+                            text:'newNode',
+                        },{
+                            text:'newNode',
+                        }
+                    ]
+                }])
+            }
+        }
+
+    </script>
+
+
+</head>
+<body onload="init();">
+
+<button onclick="getCurrNodeData()">获取选中节点的数据</button>
+<button onclick="deleteCurrNode()">删除选中节点</button>
+<button onclick="updateCurrNodeText()">更新选中节点</button>
+<button onclick="insertChildNodes()">插入子树</button>
+
+<div style="width: 120px;" id="treeBox" field = 'treeData' localField="true" itemField="currNodeData" itemLocalField="true" conv = 'window.forms.TreeViewConv(treeStyle)'></div>
+
+
+</body>
+
+
+</html>
