@@ -23,9 +23,9 @@
             background: #0f0;
         }
     </style>
-    <script src="forms/install.js"></script>
-    <script src="app/FIIS.js"></script>
-    <script src="app/app.js"></script>
+    <script src="base/forms/install.js"></script>
+    <script src="base/FIIS.js"></script>
+    <script src="base/app.js"></script>
     <script src="TreeView.js"></script>
     <script src="TreeViewConv.js"></script>
 
@@ -80,11 +80,6 @@
 
         function TreeTestForm() {
             FIISForm.apply(this, arguments);
-            var titles = {
-            };
-            for (var t in titles) {
-                this.SetTitle(t, titles[t]);
-            }
         }
 
         function getCurrNodeData() {

@@ -13,9 +13,14 @@ function TreeView(ele, style) {
                 newD[style.childNodesMember] = (oldD[style.childNodesMember]||[]).concat(d);
                 var parent = getParentNode(p);
                 if(parent){
-
-
-
+                    var c = oldD[style.childNodesMember]||[];
+                    var v= {};
+                    v[style.displayMember] = oldD[style.displayMember];
+                    v[style.childNodesMember] = c.concat(d);
+                    var b = p.parentElement;
+                    drawTree(b,[v]);
+                    _t.remove(p);
+                    refreshTrunkData(parent);
                 }else {//ok
                     var box;
                     if(oldD[style.childNodesMember]){
@@ -33,8 +38,6 @@ function TreeView(ele, style) {
                         t[style.displayMember] = oldD[style.displayMember];
                         t[style.childNodesMember] = d;
                         drawTree(box,[t]);
-
-
                         function getIndex(ele) {
                             var ns = ele.parentElement.children;
                             for(var i=0;i<ns.length;i++){
