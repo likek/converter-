@@ -28,13 +28,13 @@
     vertical-align: bottom;
 }
 /* Conv - 多选框 - 默认 */
-.CheckboxlistViewConv-UnselectdItem,.CheckboxlistViewConv-SelectdItem{
+.CheckboxListConv-UnselectdItem,.CheckboxListConv-SelectdItem{
     margin: 0 6px;
 }
-.CheckboxlistViewConv-UnselectedLabel,.CheckboxlistViewConv-SelectedLabel{
+.CheckboxListConv-UnselectedLabel,.CheckboxListConv-SelectedLabel{
     margin-right: 6px;
 }
-.CheckboxlistViewConv-UnselectedText,.CheckboxlistViewConv-SelectedText{
+.CheckboxListConv-UnselectedText,.CheckboxListConv-SelectedText{
     vertical-align: bottom;
 }
 

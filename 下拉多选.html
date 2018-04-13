@@ -53,7 +53,7 @@
 
 <!--不可过滤-->
 <!--<div field="ModalityList" condfields="Identity" itemfield="currModality" itemlocalfield="true"
-     valuechanged="valueChanged" conv="FIISForm.CheckboxlistViewConv(modalityListStyle)"
+     valuechanged="valueChanged" conv="FIISForm.CheckboxListConv(modalityListStyle)"
      requester="FIISForm.JSObjectRequester(modalityList)"
      style="width: 240px;height: 30px;border:1px solid #666;">
 </div>-->
@@ -61,7 +61,7 @@
 
 <!--可过滤-->
 <div field="ModalityList" itemfield="currModality" itemlocalfield="true"
-     conv="FIISForm.FilterableCheckboxlistViewConv(modalityListStyle)"
+     conv="FIISForm.FilterableCheckboxListConv(modalityListStyle)"
      requester="FIISForm.JSObjectRequester(modalityList)"
      style="width: 240px;height: 30px;border:1px solid #666;">
 </div>
