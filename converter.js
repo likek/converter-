@@ -511,17 +511,14 @@ window.forms.CheckboxButtonListConv = function (style) {
         };
         this.ApplyValue = function (ele, val) {
             var len = !val || !val.length ? 0 : val.length;
+            var temp = {};
+            for (var j = 0; j < len; j++) {
+                temp[val[j][style.valueMember]] = true;
+            }
             for (var i = 0; i < ele.children.length; i++) {
                 var e = ele.children[i];
                 var curr = e.__currData[style.valueMember];
-                var flag = false;
-                for (var j = 0; j < len; j++) {
-                    if (curr == val[j][style.valueMember]) {
-                        flag = true;
-                        break;
-                    }
-                }
-                e.__selected = flag;
+                e.__selected = !!temp[curr];
                 var label = e.children[0];
                 var text = e.children[1];
                 setStyle(style, e, label, text, e.__selected);
