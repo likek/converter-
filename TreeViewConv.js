@@ -19,7 +19,7 @@ window.forms.TreeViewConv = function (style) {
             else {
                 root = ele.children[0];
             }
-            tv.addChildNodes(root, value);
+            tv.InsertNodes(root, value);
 
             self.InheritProperties(ele, root);
         };
@@ -36,7 +36,7 @@ window.forms.TreeViewConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.ApplyValue = function (ele, value) {};
         this.GetUIValue = this.GetValue = function (ele) {
-            return ele.__treeView.getSelectedData();
+            return ele.__treeView.CurrData();
         }
     }
 };

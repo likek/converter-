@@ -2,15 +2,12 @@ function TreeView(ele, style) {
     var _t = this;
     var currData;
     var currNode;
-    this.addChildNodes = function (p, d) {
+    this.InsertNodes = function (p, d) {
         if(d instanceof Array){
             var oldD = getNodeData(p);
             if(!oldD){
-                drawTree(p,d);//ok
+                addTree(p,d);
             }else {
-                var newD = {};
-                newD[style.displayMember] = oldD[style.displayMember];
-                newD[style.childNodesMember] = (oldD[style.childNodesMember]||[]).concat(d);
                 var parent = getParentNode(p);
                 if(parent){
                     var c = oldD[style.childNodesMember]||[];
@@ -18,16 +15,16 @@ function TreeView(ele, style) {
                     v[style.displayMember] = oldD[style.displayMember];
                     v[style.childNodesMember] = c.concat(d);
                     var b = p.parentElement;
-                    drawTree(b,[v]);
-                    _t.remove(p);
+                    addTree(b,[v]);
+                    _t.Remove(p);
                     refreshTrunkData(parent);
-                }else {//ok
+                }else {
                     var box;
                     if(oldD[style.childNodesMember]){
                         box = p.nextSibling;
-                        drawTree(box,d);
+                        addTree(box,d);
                         refreshTrunkData(p);
-                        if(_t.getSelectedNode() === p){
+                        if(_t.CurrNode() === p){
                             currData = getNodeData(p);
                         }
                     }else {
@@ -37,7 +34,7 @@ function TreeView(ele, style) {
                         var t = {};
                         t[style.displayMember] = oldD[style.displayMember];
                         t[style.childNodesMember] = d;
-                        drawTree(box,[t]);
+                        addTree(box,[t]);
                         function getIndex(ele) {
                             var ns = ele.parentElement.children;
                             for(var i=0;i<ns.length;i++){
@@ -56,13 +53,13 @@ function TreeView(ele, style) {
 
         }
     };
-    this.getSelectedData = function () {
+    this.CurrData = function () {
         return currData;
     };
-    this.getSelectedNode = function () {
+    this.CurrNode = function () {
         return currNode;
     };
-    this.remove = function (node) {
+    this.Remove = function (node) {
         if(currNode === node){currNode = void 0;currData = void 0;}
         var childNodes = getChildNodes(node);
         var nodeBox = node.parentElement;
@@ -74,7 +71,7 @@ function TreeView(ele, style) {
             refreshTrunkData(parent);
         }
     };
-    this.update = function (node, txt) {
+    this.Update = function (node, txt) {
         var old = getNodeData(node);
         var newData = {};
         newData[style.displayMember] = txt;
@@ -87,12 +84,9 @@ function TreeView(ele, style) {
         if(parent){
             refreshTrunkData(parent);
         }
-        if(_t.getSelectedNode() === node){
+        if(_t.CurrNode() === node){
             currData = getNodeData(node);
         }
-    };
-    this.getDisplayEle = function (node) {
-      return node.__displayEle;
     };
 
     this.ondrawnode = function (nodeText, data) {};
@@ -134,7 +128,7 @@ function TreeView(ele, style) {
         }
     }
 
-    function drawTree(box, data) {
+    function addTree(box, data) {
         var doc = box.ownerDocument;
         var displayMember = style.displayMember||"text",
             childNodesMember = style.childNodesMember || 'nodes';
@@ -229,7 +223,6 @@ function TreeView(ele, style) {
             }(nodeEle);
             window.forms.Event.Unregister(nodeText, 'mousedown', nodeTextClick);
             window.forms.Event.Register(nodeText, 'mousedown', nodeTextClick);
-
             box.appendChild(nodeEle);
             box.style.position = 'relative';
             box.style.left = (style.offset||'12px');

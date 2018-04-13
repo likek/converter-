@@ -93,14 +93,14 @@
         }
         function deleteCurrNode() {
             var trv = document.getElementById('treeBox').__treeView;
-            var currNode = trv.getSelectedNode();
+            var currNode = trv.CurrNode();
             if(currNode){
-                trv.remove(currNode);
+                trv.Remove(currNode);
             }
         }
         function updateCurrNode() {
             var trv = document.getElementById('treeBox').__treeView;
-            var currNode = trv.getSelectedNode();
+            var currNode = trv.CurrNode();
             if(currNode){
                 var newdata = {
                     text:'newText',
@@ -108,22 +108,22 @@
                         {text:'newNode'},
                     ]
                 };
-                trv.update(currNode,newdata);
+                trv.Update(currNode,newdata);
             }
         }
         function updateCurrNodeText() {
             var trv = document.getElementById('treeBox').__treeView;
-            var currNode = trv.getSelectedNode();
+            var currNode = trv.CurrNode();
             if(currNode){
-                trv.update(currNode,'newText111');
+                trv.Update(currNode,'newText111');
             }
         }
 
         function insertChildNodes() {
             var trv = document.getElementById('treeBox').__treeView;
-            var currNode = trv.getSelectedNode();
+            var currNode = trv.CurrNode();
             if(currNode){
-                trv.addChildNodes(currNode,[{
+                trv.InsertNodes(currNode,[{
                     text:'newText',
                     nodes:[
                         {

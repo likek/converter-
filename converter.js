@@ -152,7 +152,7 @@ window.forms.CheckboxlistViewConv = function (filter, style) {
                                 currDataRefresh(d, 'push');
                                 setStyle("selected",e,label,desc);
                             } else {
-                                currDataRefresh(d, 'remove');
+                                currDataRefresh(d, 'Remove');
                                 setStyle("unselected",e,label,desc);
                             }
                         };
@@ -230,7 +230,7 @@ window.forms.CheckboxlistViewConv = function (filter, style) {
                                 }
                             }
                                 break;
-                            case 'remove': {
+                            case 'Remove': {
                                 if (idx !== -1) {
                                     txtContainer.__selectedData.splice(idx, 1);
                                     txtContainer.__displayText.splice(idx, 1);
