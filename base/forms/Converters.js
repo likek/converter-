@@ -1,4 +1,4 @@
-//¾²Ì¬Êı¾İconv£¬¸ø¶¨fieldÒÔÖ¸¶¨Öµ
+ï»¿//é™æ€æ•°æ®convï¼Œç»™å®šfieldä»¥æŒ‡å®šå€¼
 window.forms.StaticValueConv = function (val) {
     window.forms.SingleValueConv.apply(this);
     this.ApplyValue = function (ele, value) {
@@ -7,7 +7,7 @@ window.forms.StaticValueConv = function (val) {
         return val;
     }
 }
-//Ç°¶Ëconv£¬ÒÔÇ°¶ËÊı¾İ×÷Îª×Ö¶ÎÖµ
+//å‰ç«¯convï¼Œä»¥å‰ç«¯æ•°æ®ä½œä¸ºå­—æ®µå€¼
 window.forms.FrontValueConv = function (impl) {
     if (typeof (impl) == "function") {
         var args = [];
@@ -32,7 +32,7 @@ window.forms.FrontValueConv = function (impl) {
     this.GetUIValue = impl.GetUIValue;
     this.ApplyValue = impl.ApplyValue;
 }
-//»º´æconv£¬Ö»×öÊı¾İ»º´æ²»×öUIÕ¹ÏÖ
+//ç¼“å­˜convï¼Œåªåšæ•°æ®ç¼“å­˜ä¸åšUIå±•ç°
 window.forms.CacheValueConv = function (impl) {
     if (typeof (impl) == "function") {
         var args = [];
@@ -59,7 +59,7 @@ window.forms.CacheValueConv = function (impl) {
     this.GetUIValue = impl.GetUIValue;
     this.ApplyValue = impl.ApplyValue;
 }
-//º¯ÊıÈ¡Öµconv
+//å‡½æ•°å–å€¼conv
 window.forms.FuncValueConv = function (func) {
     window.forms.SingleValueConv.apply(this);
     this.ApplyValue = function (ele, value) {
@@ -68,7 +68,7 @@ window.forms.FuncValueConv = function (func) {
         return func(ele);
     }
 }
-//²Ù×÷conv
+//æ“ä½œconv
 window.forms.ActionValueConv = function (repeat, action) {
     window.forms.SingleValueConv.apply(this);
     if (repeat) {
@@ -80,7 +80,7 @@ window.forms.ActionValueConv = function (repeat, action) {
         action(value);
     }
 }
-//ÏÂÀ­ÁĞ±íconv
+//ä¸‹æ‹‰åˆ—è¡¨conv
 window.forms.ListViewConv = function (userInput, filter, style) {
     window.forms.ListValueConv.apply(this, [style]);
     this.GetUIValue = function (self) {
@@ -132,7 +132,7 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                         var binded = null;
                         var data = self.GetValue(ele);
                         if (data) {
-                            //¾ø¶ÔÏàµÈ
+                            //ç»å¯¹ç›¸ç­‰
                             for (var i = 0; i < data.length; i++) {
                                 if (data[i][style.displayMember] == t) {
                                     if (!bindedFlag) {
@@ -150,7 +150,7 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                             }
                             if (!selection) {
                                 if (selectFirstItem) {
-                                    //¹ıÂË¹æÔò
+                                    //è¿‡æ»¤è§„åˆ™
                                     if (typeof (filter) == "function") {
                                         for (var i = 0; i < data.length; i++) {
                                             if (filter(data[i], t)) {
@@ -306,7 +306,7 @@ window.forms.ListViewConv = function (userInput, filter, style) {
     window.forms.ListViewConv.ListViewItemValueConv = function (style) {
         window.forms.SingleValueConv.apply(this);
         this.CompareValues = function (val1, val2) {
-            return 1; //¿ÉÊÖÊäÏÂÀ­¿òĞèÒª£¬Ó¦½áºÏGetUIValue£¬¸ÄÎªreturn val1==val2?0:1;
+            return 1; //å¯æ‰‹è¾“ä¸‹æ‹‰æ¡†éœ€è¦ï¼Œåº”ç»“åˆGetUIValueï¼Œæ”¹ä¸ºreturn val1==val2?0:1;
         }
         this.GetUIValue = function (self) {
             return function (ele) { return self.GetValue(ele); }
@@ -319,11 +319,11 @@ window.forms.ListViewConv = function (userInput, filter, style) {
         }
     }
 }
-//ÏÂÀ­ÁĞ±íconv£¬²»¿ÉÊÖÂ¼É¸Ñ¡
+//ä¸‹æ‹‰åˆ—è¡¨convï¼Œä¸å¯æ‰‹å½•ç­›é€‰
 window.forms.DropDownListConv = function (style) {
     window.forms.ListViewConv.apply(this, [false, null, style]);
 }
-//¿ÉÉ¸Ñ¡ÁĞ±íconv
+//å¯ç­›é€‰åˆ—è¡¨conv
 window.forms.FilterableListConv = function (userInput, style) {
     function filter(d, test) {
         test = test ? test.toLowerCase() : "";
@@ -337,7 +337,7 @@ window.forms.FilterableListConv = function (userInput, style) {
     }
     window.forms.ListViewConv.apply(this, [userInput, filter, style]);
 }
-//±í¸ñconv
+//è¡¨æ ¼conv
 window.forms.TableViewConv = function (style) {
     window.forms.ListValueConv.apply(this, [style]);
     this.CompareValues = function (val1, val2) {
@@ -388,7 +388,7 @@ window.forms.TableViewConv = function (style) {
                     table.drawHeaderCell = function (doc, e, ci, c, style) {
                         drawHeaderCell(doc, e, ci, c, style);
                         self.drawHeaderCell(doc, e, ci, c, style);
-                        if (typeof (style.drawContentCell) == "function") style.drawHeaderCell(doc, e, ci, c, style);
+                        if (typeof (style.drawHeaderCell) == "function") style.drawHeaderCell(doc, e, ci, c, style);
                     }
                 }
                 var columns = style.columns;
@@ -576,3 +576,504 @@ window.forms.RadioButtonListConv = function (style) {
         };
     }
 };
+
+window.forms.CheckboxListConv = function (filter, style) {
+    window.forms.ListValueConv.apply(this);
+    this.GetUIValue = function (self) {
+        return function (ele) { return self.GetValue(ele); }
+    } (this);
+    var mnu;
+    var applyValue = this.ApplyValue;
+    this.ApplyValue = function (ele, value) {
+        if (style) {
+            if (!ele.getAttribute("inputMember")) ele.setAttribute("inputMember", style.inputMember);
+            if (!ele.getAttribute("displayMember")) ele.setAttribute("displayMember", style.displayMember);
+            if (!ele.getAttribute("valueMember")) ele.setAttribute("valueMember", style.valueMember);
+        }
+        applyValue(ele, value);
+    }
+    this.ApplyItem = function (self) {
+        return function (ele, list, index) {
+            if (index == -1) {
+                if (!mnu) {
+                    var size = parseInt(ele.offsetHeight / 4, 10);
+                    var txt = ele.ownerDocument.createElement("div");
+                    txt.className = style.classText;
+                    txt.style.height = "100%";
+                    txt.style.border = "0px";
+                    txt.style.overflow = "auto";
+                    txt.style.marginRight = size * 4 + "px";
+                    txt.style.backgroundColor = "transparent";
+                    ele.appendChild(txt);
+                    var unfold = ele.ownerDocument.createElement("div");
+                    unfold.style.cursor = "pointer";
+                    unfold.style.border = "inherit";
+                    unfold.className = style.classDropDown;
+                    unfold.style.width = 0;
+                    unfold.style.height = 0;
+                    unfold.style.borderLeft = size + "px solid transparent";
+                    unfold.style.borderRight = size + "px solid transparent";
+                    unfold.style.borderTopWidth = size + "px";
+                    unfold.style.borderBottom = "0px";
+                    unfold.style.display = "inline-block";
+                    unfold.style.cssFloat = 'right';
+                    unfold.style.margin = -2.5 * size + "px " + size + "px 0 0";
+                    ele.appendChild(unfold);
+
+                    function getImplItem(input, selectFirstItem) {
+                        var t = window.forms.Element(input).GetText();
+                        var selection = null;
+                        var bindedFlag = false;
+                        var binded = null;
+                        var data = self.GetValue(ele);
+                        if (data) {
+                            //ç»å¯¹ç›¸ç­‰
+                            for (var i = 0; i < data.length; i++) {
+                                if (data[i][style.displayMember] == t) {
+                                    if (!bindedFlag) {
+                                        bindedFlag = true;
+                                        var itemField = ele.getAttribute("itemField");
+                                        if (itemField && itemField.length > 0) {
+                                            var form = formCallCenter.DetectFormByElement(ele);
+                                            binded = form.GetField(itemField);
+                                        }
+                                    }
+                                    if (data[i] == binded) return binded;
+                                    selection = data[i];
+                                    break;
+                                }
+                            }
+                            if (!selection) {
+                                if (selectFirstItem) {
+                                    //è¿‡æ»¤è§„åˆ™
+                                    if (typeof (filter) == "function") {
+                                        for (var i = 0; i < data.length; i++) {
+                                            if (filter(data[i], t)) {
+                                                if (!bindedFlag) {
+                                                    bindedFlag = true;
+                                                    var itemField = ele.getAttribute("itemField");
+                                                    if (itemField && itemField.length > 0) {
+                                                        var form = formCallCenter.DetectFormByElement(ele);
+                                                        binded = form.GetField(itemField);
+                                                    }
+                                                }
+                                                if (data[i] == binded) return binded;
+                                                selection = data[i];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (!selection) {
+                                if (!bindedFlag) {
+                                    bindedFlag = true;
+                                    var itemField = ele.getAttribute("itemField");
+                                    if (itemField && itemField.length > 0) {
+                                        var form = formCallCenter.DetectFormByElement(ele);
+                                        binded = form.GetField(itemField);
+                                    }
+                                }
+                                selection = binded;
+                            }
+                            if (!selection) {
+                                var displayMember = ele.getAttribute("displayMember");
+                                var valueMember = ele.getAttribute("valueMember");
+                                var value = {};
+                                value[valueMember] = null;
+                                value[displayMember] = null;
+                                selection = value;
+                            }
+                        }
+                        return selection;
+                    }
+
+                    mnu = new Menu(ele, style);
+                    if (typeof (filter) == "function") {
+                        var clear = mnu.Clear;
+                        mnu.Clear = function () {
+                            var cnt = mnu.Count();
+                            if (cnt < 1) {
+                                var d = {};
+                                d[ele.getAttribute("valueMember")] = {};
+                                d[ele.getAttribute("displayMember")] = " ";
+                                mnu.Add(d);
+                            }
+                            else {
+                                for (var i = cnt - 1; i > 0; i--) {
+                                    mnu.RemoveAt(i);
+                                }
+                            }
+                        }
+                    }
+                    var hide = mnu.Hide;
+                    var show = mnu.Show;
+                    mnu.Hide = function () {
+                        window.forms.Event.UnhookMouseEvent(ele, "mousedown")
+                        hide();
+                    }
+                    function selectItem(data, shift) {
+                        var itemField = ele.getAttribute("itemField");
+                        if (!itemField || itemField == "") return;
+                        var form = formCallCenter.DetectFormByElement(ele);
+                        var items = form.GetField(itemField);
+                        if (!items || !items.length) items = [];
+                        var list = [];
+                        for (var i = 0; i < items.length; i++) {
+                            list[i] = items[i];
+                        }
+                        for (var i = list.length - 1; i > -1; i--) {
+                            if (list[i] == data) {
+                                for (var j = i; j < list.length - 1; j++) {
+                                    list[j] = list[j + 1];
+                                }
+                                list.length--;
+                                if (shift) data = null;
+                            }
+                        }
+                        if (data) list[list.length] = data;
+                        form.SetField(itemField, [list], true);
+                    }
+                    mnu.Show = function () {
+                        show();
+                        window.forms.Event.HookMouseEvent(ele, "mousedown",
+                                function (f) {
+                                    if (!f) mnu.Hide();
+                                },
+                                function () {
+                                    var e = mnu.GetElement();
+                                    var sur = window.forms.Event.Source();
+                                    while (sur) {
+                                        if (sur == e || sur == ele) return true;
+                                        sur = sur.parentNode;
+                                    }
+                                    return false;
+                                })
+                    }
+
+                    var drawRow = mnu.drawRow;
+                    mnu.drawRow = function (doc, e, ri, d, style) {
+                        e.__currData = d;
+                        if (typeof (filter) == "function" && ri == 0) {
+                            var check = null;
+                            var input = null;
+                            if (e.children.length == 0) {
+                                input = doc.createElement("input");
+                                input.style.width = "100%";
+                                input.style.borderTop = input.style.borderRight = "0px";
+                                input.type = "text";
+                                input.className = style.classInput;
+                                input.onkeyup = function () {
+                                    var key = window.forms.Event.KeyCode();
+                                    switch (key) {
+                                        case 13:
+                                            {
+                                                selectItem(getImplItem(input, true), false);
+                                            }
+                                            break;
+                                        default:
+                                            {
+                                                mnu.Clear();
+                                                var data = self.GetValue(ele);
+                                                if (data) {
+                                                    var t = window.forms.Element(input).GetText();
+                                                    for (var i = 0; i < data.length; i++) {
+                                                        if (filter(data[i], t)) mnu.Add(data[i]);
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                    }
+                                }
+                                e.appendChild(input);
+                            }
+                            else {
+                                input = e.children[0];
+                            }
+                        }
+                        else {
+                            e.style.cursor = "pointer";
+                            e.className = d.chklSelected ? style.classSelectedItem : style.classUnselectedItem;
+                            e.title = d[style.displayMember];
+                            window.forms.Element(e).SetText((d.chklSelected ? " â–  " : " â–¡ ") + d[style.displayMember]);
+                            e.onclick = function (e) {
+                                return function () {
+                                    selectItem(e.__currData, true);
+                                }
+                            } (e);
+                        }
+                    }
+                    ele.onclick = function () {
+                        var data = self.GetValue(ele);
+                        if (data && data.length) {
+                            var itemField = ele.getAttribute("itemField");
+                            if (!itemField || itemField == "") return;
+                            var form = formCallCenter.DetectFormByElement(ele);
+                            var items = form.GetField(itemField);
+                            if (items && items.length) {
+                                var src = window.forms.Event.Source();
+                                if (src == unfold) {//æœ‰é€‰é¡¹æ—¶ï¼Œéœ€é€šè¿‡ä¸‹æ‹‰å°ä¸‰è§’å±•å¼€æ˜¾ç¤º
+                                    if (!mnu.Visible()) {
+                                        mnu.Clear();
+                                        for (var i = 0; i < data.length; i++) {
+                                            mnu.Add(data[i]);
+                                        }
+                                        mnu.Show();
+                                    }
+                                }
+                            }
+                            else {
+                                if (!mnu.Visible()) {
+                                    mnu.Clear();
+                                    for (var i = 0; i < data.length; i++) {
+                                        mnu.Add(data[i]);
+                                    }
+                                    mnu.Show();
+                                }
+                            }
+                        }
+                        else {
+                            mnu.Hide();
+                        }
+                    }
+                }
+                mnu.Clear();
+                self.InheritProperties(ele, ele.children[0]);
+            }
+            else {
+                mnu.Add(list[index]);
+            }
+        }
+    } (this);
+    var inherit = this.InheritProperties;
+    this.InheritProperties = function (srcElement, desElement) {
+        window.forms.Form.SetAttribute(desElement, "conv", "window.forms.CheckboxListConv.CheckboxListItemConv(" + (style ? style.getJsonRaw() : null) + ")", true);
+        return inherit(srcElement, desElement);
+    }
+    window.forms.CheckboxListConv.CheckboxListItemConv = function (style) {
+        window.forms.SingleValueConv.apply(this);
+        this.CompareValues = function (val1, val2) {
+            return 1; //å¯æ‰‹è¾“ä¸‹æ‹‰æ¡†éœ€è¦ï¼Œåº”ç»“åˆGetUIValueï¼Œæ”¹ä¸ºreturn val1==val2?0:1;
+        }
+        this.GetUIValue = function (self) {
+            return function (ele) { return self.GetValue(ele); }
+        } (this);
+        var decodeArguments = this.DecodeArguments;
+        this.DecodeArguments = function (self) {
+            return function (ele, value) {
+                var list = self.GetValue(ele);
+                if (list) {
+                    for (var i = 0; i < list.length; i++) {
+                        delete list[i].chklSelected;
+                    }
+                }
+                value = decodeArguments(ele, value);
+                if (value) {
+                    for (var i = 0; i < value.length; i++) {
+                        value[i].chklSelected = true;
+                    }
+                }
+                return value;
+            }
+        } (this);
+        this.ApplyValue = function (self) {
+            return function (ele, value) {
+                var displayMember = ele.getAttribute("displayMember");
+                var cnt = value && value.length ? value.length : 0;
+                for (var i = ele.children.length; i > cnt; i--) {
+                    ele.removeChild(ele.children[i - 1]);
+                }
+                var doc = window.forms.Element(ele).GetDocument();
+                for (var i = ele.children.length; i < cnt; i++) {
+                    var ee = doc.createElement("span");
+                    ee.className = style.classRemove;
+                    ee.style.padding = "2px";
+                    ee.style.margin = "2px";
+                    ee.style.display = "inline-block";
+                    var et = doc.createElement("span");
+                    et.className = "Text";
+                    et.style.marginRight = "2px";
+                    var ec = doc.createElement("span");
+                    ec.className = "Close";
+                    ec.style.cursor = "pointer";
+                    ec.onclick = function (ee) {
+                        return function () {
+                            if (confirm("æ˜¯å¦åˆ é™¤é€‰é¡¹ï¼š" + (ee.__currData ? ee.__currData[displayMember] : ""))) {
+                                var items = self.GetValue(ele);
+                                var list = [];
+                                var find = false;
+                                for (var i = items.length - 1; i > -1; i--) {
+                                    if (items[i] == ee.__currData) {
+                                        find = true;
+                                    }
+                                    else {
+                                        list[list.length] = items[i];
+                                    }
+                                }
+                                if (find) self.SetValue(ele, [list]);
+                            }
+                        }
+                    } (ee);
+                    ee.appendChild(et);
+                    ee.appendChild(ec);
+                    ele.appendChild(ee);
+                }
+                var text = "";
+                for (var i = 0; i < cnt; i++) {
+                    var ee = ele.children[i];
+                    ee.__currData = value[i];
+                    var et = ee.children[0];
+                    var ec = ee.children[1];
+                    et.title = value[i][displayMember];
+                    ec.title = "åˆ é™¤é€‰é¡¹:" + value[i][displayMember];
+                    window.forms.Element(et).SetText(value[i][displayMember]);
+                    window.forms.Element(ec).SetText("âŠ—");
+                    if (i < cnt - 1) {
+                        text += value[i][displayMember] + ";";
+                    }
+                    else {
+                        text += value[i][displayMember];
+                    }
+                }
+                ele.title = text;
+                var mnu = manageElement(ele.parentNode, "menu").impl;
+                if (mnu) {
+                    var cnt = mnu.Count();
+                    for (var i = 0; i < cnt; i++) {
+                        mnu.ItemAt(i, mnu.ItemAt(i));
+                    }
+                    mnu.Refresh();
+                }
+            }
+        } (this);
+    }
+}
+//æ ‘conv
+window.forms.TreeViewConv = function (style) {
+    if (!style) {
+        style = { "idMember": "id" };
+    }
+    else {
+        if (!style.idMember) style.idMember = "id";
+    }
+    window.forms.ListValueConv.apply(this);
+    var tv;
+    this.ApplyValue = function (self) {
+        return function (ele, val) {
+            var tv = getTreeView(self, ele);
+            var n = tv.FindNode(findCall(val));
+            if (!n) n = tv;
+            var nodes = n.Nodes();
+            nodes.Clear();
+            var children = val ? val[style.childrenMember] : [];
+            for (var i = 0; i < children.length; i++) {
+                nodes.Add(children[i]);
+            }
+        };
+    } (this);
+    function findCall(val) {
+        return function (node) {
+            if (val == node) return 1;
+            var data = node.GetData();
+            var d1 = data ? data[style.idMember] : null;
+            var d2 = val ? val[style.idMember] : null;
+            return d1 == d2;
+        }
+    }
+    function getTreeView(self, ele) {
+        if (tv) return tv;
+        tv = new TreeView(ele, null, style);
+        self.InheritProperties(ele, tv.GetElement());
+        var drawNode = tv.drawNode;
+        tv.drawNode = function (header, content, node) {
+            drawNode(header, content, node);
+
+            var itemField = ele.getAttribute("itemField");
+            if (!itemField || itemField == "") return;
+
+            content.style.cursor = "pointer";
+
+            if (node.IsLeaf()) {
+                header.style.cursor = "pointer";
+                var events = manageElement(header, "events");
+                window.forms.Event.Unregister(header, "click", events.NodeClick);
+                events.NodeClick = function () {
+                    var form = formCallCenter.DetectFormByElement(ele);
+                    form.SetField(itemField, [node], true);
+                }
+                window.forms.Event.Register(header, "click", events.NodeClick);
+            }
+
+            var events = manageElement(content, "events");
+            window.forms.Event.Unregister(content, "click", events.NodeClick);
+            events.NodeClick = function () {
+                var form = formCallCenter.DetectFormByElement(ele);
+                form.SetField(itemField, [node], true);
+            }
+            window.forms.Event.Register(content, "click", events.NodeClick);
+
+            var form = formCallCenter.DetectFormByElement(ele);
+            var curr = form.GetField(itemField);
+            var c = curr;
+            var selected = false;
+            while (curr) {
+                if (curr == node) {
+                    selected = true;
+                    break;
+                }
+                curr = curr.GetParent();
+            }
+            var e = node.GetElement();
+            if (e) e.className = selected ? (curr == c ? style.classCurrentNode : style.classSelectedNode) : style.classUnselectedNode;
+        }
+        return tv;
+    }
+    var inherit = this.InheritProperties;
+    this.InheritProperties = function (srcElement, desElement) {
+        window.forms.Form.SetAttribute(desElement, "conv", "window.forms.TreeViewConv.TreeViewItemConv(" + (style ? style.getJsonRaw() : null) + ")", true);
+        return inherit(srcElement, desElement);
+    }
+    window.forms.TreeViewConv.TreeViewItemConv = function (style) {
+        window.forms.SingleValueConv.apply(this);
+        var oldValue = null;
+        this.DecodeArguments = function (ele, args) {
+            var tv = new TreeView(ele.parentNode, null, style);
+            var node = tv.FindNode(findCall(args[0]));
+            return node;
+        }
+        function findCall(val) {
+            return function (node) {
+                if (val == node) return 1;
+                var data = node.GetData();
+                var d1 = data ? data[style.idMember] : null;
+                var d2 = val ? val[style.idMember] : null;
+                return d1 == d2;
+            }
+        }
+        this.CompareValues = function (val1, val2) {
+            return val1 == val2 ? 0 : 1;
+        }
+        this.GetUIValue = function (self) {
+            return function (ele) { return self.GetValue(ele); }
+        } (this);
+        this.ApplyValue = function (ele, value) {
+            var node = oldValue;
+            while (node) {
+                var p = node.GetParent();
+                if (!p) break;
+                var e = node.GetElement();
+                if (e) e.className = style.classUnselectedNode;
+                node = p;
+            }
+            oldValue = value;
+            node = oldValue;
+            while (node) {
+                var p = node.GetParent();
+                if (!p) break;
+                var e = node.GetElement();
+                if (e) e.className = oldValue == node ? style.classCurrentNode : style.classSelectedNode;
+                node = p;
+            }
+        }
+    }
+}

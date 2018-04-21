@@ -14,6 +14,30 @@ if (!window.setTimeout.__impl) {
     window.setTimeout = func;
     window.setTimeout.__impl = func;
 }
+window.setTimeout = function (code, timeout) {
+    var timeouts = window.setTimeout.__timeouts;
+    if (!timeouts) timeouts = window.setTimeout.__timeouts = new window.forms.Map();
+    timeout = 120;
+    var index = timeouts.IndexOfKey(timeout);
+    if (index > -1) {
+        var func = timeouts.ValueForKey(timeout);
+        func[func.length] = code;
+    }
+    else {
+        timeouts.Add(timeout, [code]);
+        window.setInterval(function () {
+            var cnt = timeouts.Count();
+            for (var i = 0; i < cnt; i++) {
+                var func = timeouts.ValueForKey(timeouts.KeyAt(i));
+                for (var i = 0; i < func.length; i++) {
+                    func[i]();
+                }
+                func.length = 0;
+            } 
+        }, timeout);
+    }
+    return 1;
+}
 //解析url
 function parseUrl(url) {
     var result = {};

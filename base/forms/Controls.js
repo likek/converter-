@@ -45,17 +45,13 @@
             init();
             var refreshTimeout = 0;
             var interval = 120;
-            var token;
             function refresh(pos) {
                 if (typeof (pos) == "undefined") {
-                    refreshImpl(token, function () { return false; });
+                    refreshImpl(function () { return false; });
                 }
                 else {
                     if (eleContent.style.display != "") return;
-                    if (!refreshTimeout) {
-                        token = Math.random();
-                        refreshTimeout = setTimeout(function (t) { return function () { refreshImpl(t, function () { return false; }) } } (token), interval);
-                    }
+                    if (!refreshTimeout) refreshTimeout = setTimeout(function () { return function () { refreshImpl(function () { return false; }) } } (), interval);
                 }
             }
             this.preLayout = function (root) {
@@ -64,8 +60,7 @@
             this.sufLayout = function (root) {
                 return false;
             }
-            function refreshImpl(t, ctn) {
-                if (token != t) return;
+            function refreshImpl(ctn) {
                 refreshTimeout = 0;
                 if (eleContent.style.display != "") return;
                 var d1 = new Date();
@@ -95,22 +90,23 @@
                     derived.drawRow(doc, tb.lvChildren[0], 0, data[0], style);
                     delete data[0].__refresh__;
                 }
-                var range = derived.viewRange(tb.lvChildren, null, 0, tb.lvChildren.length - 1, diff);
                 var need = true;
                 var force = true;
                 while (need) {
                     need = false;
 
                     while (cnt < data.length && force) {
+                        var range = derived.viewRange(tb.lvChildren, null, 0, tb.lvChildren.length - 1, diff);
                         var start = range.Start;
                         var end = range.End + 1;
-                        if (range.End == cnt - 1) { //页尾
+                        if (end >= cnt) { //页尾
                             force = true;
-                            if (end <= start) end = start + 1;
+                            end = cnt + 10;
+                            if (end > data.length) end = data.length;
                         }
                         else {
                             force = ctn();
-                            end = start + 1;
+                            if (cnt - end >= end - start) end = start + 1;
                         }
                         for (var i = start; i < end; i++) {
                             var tr = derived.createRow(doc, cnt, data[cnt]);
@@ -121,10 +117,11 @@
                             cnt++;
                             if (cnt >= data.length) break;
                         }
-                        range = derived.viewRange(tb.lvChildren, null, 0, tb.lvChildren.length - 1, diff);
                     }
 
                     while (true) {
+                        //绘制可能导致布局改变，需要重新计算
+                        var range = derived.viewRange(tb.lvChildren, null, 0, tb.lvChildren.length - 1, diff);
                         var start = range.Start;
                         if (start > 0) start--;
                         var end = range.End + 1;
@@ -140,7 +137,6 @@
                             }
                         }
                         if (!flag) break;
-                        range = derived.viewRange(tb.lvChildren, null, 0, tb.lvChildren.length - 1, diff); //绘制可能导致布局改变，需要重新计算
                     }
                     if (!need) need = force = derived.sufLayout(root);
                 }
@@ -319,7 +315,6 @@
     this.Contains = impl.Contains;
     this.Clear = impl.Clear;
     this.Count = impl.Count;
-    this.Bind = impl.Bind;
     this.createRow = function (doc, index, d) {
         var tr = doc.createElement("DIV");
         var td = doc.createElement("DIV");
@@ -629,6 +624,7 @@ function Menu(mnuRoot, style, updateCall) {
                 return root.style.display == "";
             }
             this.Show = function () {
+                root.style.display = "";
                 lv.Refresh();
             }
             this.Hide = function () {
@@ -643,7 +639,6 @@ function Menu(mnuRoot, style, updateCall) {
             function layout() {
                 root.className = style.classMenu;
                 root.style.position = "absolute";
-                root.style.display = "";
                 root.style.zIndex = 99999999;
 
                 root.style.minWidth = mnuRoot.offsetWidth + "px";
@@ -657,7 +652,6 @@ function Menu(mnuRoot, style, updateCall) {
             this.Contains = lv.Contains;
             this.Clear = lv.Clear;
             this.Count = lv.Count;
-            this.Bind = lv.Bind;
             lv.createRow = function (doc, index, d) {
                 return doc.createElement("DIV");
             }
@@ -694,7 +688,6 @@ function Menu(mnuRoot, style, updateCall) {
     this.Contains = impl.Contains;
     this.Clear = impl.Clear;
     this.Count = impl.Count;
-    this.Bind = impl.Bind;
     this.drawRow = function (doc, e, ri, d, style) {
         window.forms.Element(e).SetText(d[style.displayMember]);
         if (ri % 2 == 0) {
@@ -813,4 +806,256 @@ function Menu(mnuRoot, style, updateCall) {
         }
     } (this);
     impl.setDerived(this);
+}
+
+function TreeView(root, data, style) {
+    function TreeNode(parent, root, data, drawNode, style) {
+        var treeNode = manageElement(root, "treeNode");
+        impl = treeNode.impl;
+        if (!impl) {
+            if (!style) {
+                style = { "displayMember": "name", "childrenMember": "children" };
+            }
+            else {
+                if (!style.displayMember) style.displayMember = "name";
+                if (!style.childrenMember) style.childrenMember = "children";
+            }
+            impl = treeNode.impl = new function (parent, self, root, data, style) {
+                var offset = self.constructor == TreeNode ? 1 : 0;
+                var ele = null;
+                var nodes = [];
+                var ns = null;
+                function init(self) {
+                    if (root.lvInit) return;
+
+                    ns = new function (self) {
+                        this.Insert = function (index, data) {
+                            if (!(index >= 0 && index <= nodes.length && parseInt(index, 10) == index)) throw new Error("IndexOutOfRange");
+
+                            var e = window.forms.Element(root);
+                            var doc = e.GetDocument();
+                            var tr = doc.createElement("tr");
+                            var td = doc.createElement("td");
+                            tr.appendChild(td);
+                            td = doc.createElement("td");
+                            tr.appendChild(td);
+                            var node = new TreeNode(self, td, data, offset ? drawNode : self.drawNode, style);
+                            for (var i = nodes.length; i > index; i--) {
+                                nodes[i] = nodes[i - 1];
+                            }
+                            nodes[index] = node;
+
+                            var tbody = ele.children[0];
+                            if (index == ele.children.length - 1 - offset) {
+                                tbody.appendChild(tr);
+                            }
+                            else {
+                                tbody.insertBefore(tr, ele.children[index + offset]);
+                            }
+                            if (self.Refresh) self.Refresh();
+                            return node;
+                        }
+                        this.Add = function (self) {
+                            return function (data) {
+                                return self.Insert(nodes.length, data);
+                            }
+                        } (this);
+                        this.RemoveAt = function (index) {
+                            if (!(index >= 0 && index < nodes.length && parseInt(index, 10) == index)) throw new Error("IndexOutOfRange");
+                            var node = nodes[index];
+                            for (var i = index + 1; i < nodes.length; i++) {
+                                nodes[i - 1] = nodes[i];
+                            }
+                            nodes.length--;
+                            node.Nodes().Clear();
+                            node.Release();
+                            var tbody = ele.children[0];
+                            tbody.removeChild(tbody.children[index + offset]);
+                            if (self.Refresh) self.Refresh();
+                        }
+                        this.Remove = function (self) {
+                            return function (dataOrNode, dataFilter) {
+                                var index = self.IndexOf(dataOrNode, dataFilter);
+                                if (index > -1) self.RemoveAt(index);
+                            }
+                        } (this);
+                        this.IndexOf = function (dataOrNode, dataFilter) {
+                            if (typeof (dataFilter) != "function") dataFilter = function (r1, r2) {
+                                return window.forms.object.Compare(r1, r2) == 0;
+                            };
+                            if (dataOrNode && typeof (dataOrNode.GetData) == "function") dataOrNode = dataOrNode.GetData();
+                            for (var i = 0; i < nodes.length; i++) {
+                                if (dataFilter(nodes[i].GetData(), dataOrNode)) return i;
+                            }
+                            return -1;
+                        }
+                        this.ItemAt = function (index) {
+                            if (!(index >= 0 && index < nodes.length && parseInt(index, 10) == index)) throw new Error("IndexOutOfRange");
+                            return nodes[index];
+                        }
+                        this.Contains = function (self) {
+                            return function (dataOrNode, dataFilter) {
+                                return self.IndexOf(dataOrNode, dataFilter) > -1;
+                            }
+                        } (this);
+                        this.Clear = function () {
+                            var ns = [];
+                            for (var i = 0; i < nodes.length; i++) {
+                                ns[i] = nodes[i];
+                            }
+                            nodes.length = 0;
+                            for (var i = 0; i < ns.length; i++) {
+                                ns[i].Nodes().Clear();
+                                ns[i].Release();
+                            }
+                            var tbody = ele.children[0];
+                            for (var i = tbody.children.length - 1; i >= offset; i--) {
+                                tbody.removeChild(tbody.children[i]);
+                            }
+                            if (self.Refresh) self.Refresh();
+                        }
+                        this.Count = function () {
+                            return nodes.length;
+                        }
+                    } (self);
+
+                    root.innerHTML = "";
+                    var e = window.forms.Element(root);
+                    var doc = e.GetDocument();
+                    ele = doc.createElement("table");
+
+                    var tbody = doc.createElement("tbody");
+                    ele.appendChild(tbody);
+                    root.appendChild(ele);
+
+                    if (offset == 1) {
+                        var unfolded = false;
+                        var refreshTimeout = 0;
+                        var interval = 120;
+                        var tr = doc.createElement("tr");
+                        var td = doc.createElement("td");
+                        tr.appendChild(td);
+                        td = doc.createElement("td");
+                        tr.appendChild(td);
+                        tbody.appendChild(tr);
+                        self.IsLeaf = function () {
+                            return (!data || !data[style.childrenMember]) && ns.Count() < 1;
+                        }
+                        self.Unfolded = function () { return unfolded; }
+                        self.Fold = function () {
+                            unfolded = false;
+                            if (self.Refresh) self.Refresh();
+                        }
+                        self.Unfold = function () {
+                            unfolded = true;
+                            if (self.Refresh) self.Refresh();
+                        }
+                        self.Refresh = function () {
+                            if (!parent) return;
+                            if (!refreshTimeout) refreshTimeout = setTimeout(refreshImpl, interval);
+                        }
+                        function refreshImpl() {
+                            refreshTimeout = 0;
+                            if (!parent) return;
+                            drawNode(tr.children[0], tr.children[1], self);
+                            if (typeof (style.drawNode) == "function") style.drawNode(tr.children[0], tr.children[1], self);
+                            for (var i = offset; i < tr.parentNode.children.length; i++) {
+                                tr.parentNode.children[i].style.display = unfolded ? "" : "none";
+                            }
+                        }
+                        self.Release = function () {
+                            if (!parent) return;
+                            var brothers = parent.Nodes();
+                            var cnt = brothers.Count();
+                            for (var i = 0; i < cnt; i++) {
+                                if (brothers.ItemAt(i) == self) throw new Error("Node can not be removed");
+                            }
+                            parent = null;
+                        }
+                        self.GetElement = function () {
+                            return tr;
+                        }
+                    }
+                    else {
+                        self.IsLeaf = function () {
+                            return false;
+                        }
+                        self.Unfolded = function () { return true; }
+                        self.Fold = function () {
+                        }
+                        self.Unfold = function () {
+                        }
+                        self.Refresh = function () {
+                        }
+                        self.drawNode = drawNode;
+                        self.GetElement = function () {
+                            return ele;
+                        }
+                    }
+                    self.Refresh();
+                    root.lvInit = true;
+                }
+                this.GetParent = function () {
+                    return parent;
+                }
+                this.GetData = function () {
+                    return data;
+                }
+                this.Nodes = function () {
+                    return ns;
+                }
+                this.FindNode = function (self) {
+                    return function (find) {
+                        if (typeof (find) != "function") return null;
+                        if (offset && find(self)) return self;
+                        var cnt = ns.Count();
+                        for (var i = 0; i < cnt; i++) {
+                            var n = ns.ItemAt(i);
+                            n = n.FindNode(find);
+                            if (n) return n;
+                        }
+                        return null;
+                    }
+                } (this);
+                init(this);
+            } (parent, this, root, data, style);
+        }
+        return impl;
+    }
+    var treeView = manageElement(root, "treeView");
+    var impl = treeView.impl;
+    if (!impl) {
+        var drawNode = function (header, content, node) {
+            var data = node.GetData();
+            var text = data ? data[style.displayMember] : "";
+            header.style.width = "12px";
+            if (node.IsLeaf()) {
+                window.forms.Element(header).SetText("*");
+                header.title = text;
+            }
+            else {
+                header.style.cursor = "pointer";
+                if (node.Unfolded()) {
+                    window.forms.Element(header).SetText("-");
+                    header.title = "收起：" + text;
+                }
+                else {
+                    window.forms.Element(header).SetText("+");
+                    header.title = "展开：" + text;
+                }
+                header.onclick = function () {
+                    if (node.Unfolded()) {
+                        node.Fold();
+                    }
+                    else {
+                        node.Unfold();
+                    }
+                }
+            }
+            content.title = text;
+            window.forms.Element(content).SetText(text);
+        }
+        impl = treeView.impl = TreeNode.apply(this, [null, root, data, drawNode, style]);
+    }
+    return impl;
 }

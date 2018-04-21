@@ -151,15 +151,37 @@ FIISForm.TileListConv = function (style, decode) {
     window.forms.TileListConv.apply(this, [style]);
     FIISForm.FIISValueDecoder.apply(this, [decode]);
 }
-FIISForm.RadioButtonListConv = function (decode) {
+FIISForm.RadioButtonListConv = function (style, decode) {
     window.forms.RadioButtonListConv.apply(this, arguments);
     FIISForm.FIISValueDecoder.apply(this, [decode]);
 };
 
-FIISForm.TableViewConv = function (decode) {
+FIISForm.TableViewConv = function (style, decode) {
     window.forms.TableViewConv.apply(this, arguments);
     FIISForm.FIISValueDecoder.apply(this, [decode]);
 };
+
+
+FIISForm.CheckboxListConv = function (style, decode) {
+    window.forms.CheckboxListConv.apply(this, [null, style]);
+    FIISForm.FIISValueDecoder.apply(this, [decode]);
+};
+
+FIISForm.FilterableCheckboxListConv = function (style, decode) {
+    function filter(d, test) {
+        test = test ? test.toLowerCase() : "";
+        var input = d[style.inputMember];
+        if (input && input.toLowerCase().indexOf(test) > -1) return true;
+        var display = d[style.displayMember];
+        if (display && display.toLowerCase().indexOf(test) > -1) return true;
+        var value = d[style.valueMember];
+        if (value && value.toLowerCase().indexOf(test) > -1) return true;
+        return false;
+    }
+    window.forms.CheckboxListConv.apply(this, [filter, style]);
+    FIISForm.FIISValueDecoder.apply(this, [decode]);
+};
+
 
 FIISForm.GroupValueConv = function () {
     window.forms.SingleValueConv.apply(this);
