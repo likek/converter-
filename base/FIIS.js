@@ -68,8 +68,16 @@ FIISForm.WSVCRequester = function (serviceUrl, catalog, item) {
                     result.Result = null;
                     break;
             }
-            callback(result);
-        }
+            if(result.ErrorCode === "0001" && result.Message && (result.Message + "").indexOf("会话过期")!==-1){//会话过期
+                if(!FIISForm.WSVCRequester.__hasTimeout){
+                    messageBox([result.Message]);
+                    window.top.location.href ="/ui/app/login/Login.html";
+                    FIISForm.WSVCRequester.__hasTimeout = true;
+                }
+            }else {
+                callback(result);
+            }
+        };
         req.Query(serviceUrl, "catalog=" + encodeURIComponent(catalog) + "&action=" + encodeURIComponent(item) + "&input=" + encodeURIComponent(args[0].getJsonRaw()), response);
     }
 }

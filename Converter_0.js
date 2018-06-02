@@ -1,4 +1,4 @@
-﻿window.forms.CheckboxButtonListConv = function (style) {
+window.forms.CheckboxButtonListConv = function (style) {
     window.forms.TileListConv.apply(this, [style]);
     this.ApplyItem = function (self) {
         return function (ele, list, index) {
@@ -30,6 +30,7 @@
                     e.appendChild(text);
                     e.onclick = function (e) {
                         return function () {
+                            if(window.forms.Event.Source() ===e)return;
                             e.__selected = !e.__selected;
                             var form = formCallCenter.DetectFormByElement(root);
                             var field = root.getAttribute('field');
@@ -408,8 +409,8 @@ window.forms.CloseableTileListConv = function (style) {
                                     }
                                 }
                                 if(titleData[style.valueMember] === currData[style.valueMember]){
-                                    var newData = root.lastElementChild.__currData;
-                                    newData && form.SetField(field, [newData],true);
+                                    var newData = root.lastElementChild ? root.lastElementChild.__currData:null;
+                                    form.SetField(field, [newData],true);
                                 }else {
                                     form.SetField(field, [currData],true);
                                 }
@@ -424,7 +425,7 @@ window.forms.CloseableTileListConv = function (style) {
                 e.className = style.classUnselectedItem;
                 e.__currData = list[index];
                 window.forms.Element(e.children[0]).SetText(list[index][root.getAttribute("displayMember")]);
-                if(typeof style.drawTitle === 'function') style.drawTitles(e,e.__currData,style);
+                if(typeof style.drawTitle == 'function') style.drawTitle(e,e.__currData,style);
             }
         }
     } (this);
@@ -433,7 +434,7 @@ window.forms.CloseableTileListConv = function (style) {
         window.forms.Form.SetAttribute(desElement, "conv", "window.forms.CloseableTileListConv.TileListItemConv(" + (style ? style.getJsonRaw() : null) + ")", true);
         return inherit(srcElement, desElement);
     }
-    window.forms.CloseableTileListConv.TileListItemConv = function (style) {
+    window.forms.CloseableTileListConv.TileListItemConv = function () {
         window.forms.SingleValueConv.apply(this);
         this.DetermineApply = function () {
             return true;
@@ -481,16 +482,223 @@ window.forms.ReadonlyListValueConv = function (style) {
                                 for(var i =0;i<list.length;i++){
                                     if(list[i][style.valueMember] === val[style.valueMember]){
                                         window.forms.Element(ele).SetText(list[i][style.displayMember]);
-                                        break;
+                                        return;
                                     }
                                 }
+                                window.forms.Element(ele).SetText('');
                             }
                         }
                     }
                 }
+            }else {
+                window.forms.Element(ele).SetText('');
             }
         }
     }
+};
+
+window.forms.CheckableTableViewConv = function (style) {
+    window.forms.TableViewConv.apply(this,arguments);
+    var checkAll;
+    this.drawHeaderRow = (function(self){
+        return function (doc, e, columns, style) {
+            var ele = self.__itemFieldElement;
+            var form = formCallCenter.DetectFormByElement(ele),field = ele.getAttribute('field');
+            var header = ele.tvHeader;//真正的header
+            if(checkAll)return;
+            checkAll = doc.createElement('span');
+            checkAll.className =  style.classUnselectedCheckAllBox;
+            header.parentElement.insertBefore(checkAll,header);//不能插到header里
+            header.style.display = 'inline-block';
+            checkAll.onclick = function () {
+                if(!this.__isCheck){
+                    var allres = self.GetValue(ele.parentElement);
+                    allres = JSON.parse(JSON.stringify(allres));
+                    form.SetField(field,[allres]);
+                    this.className = searchTableViewStyle.classSelectedCheckAllBox;
+                    this.__isCheck = true;
+                }else {
+                    form.SetField(field,[[]]);
+                    this.className = searchTableViewStyle.classUnselectedCheckAllBox;
+                    this.__isCheck = false;
+                }
+            }
+        };
+    })(this);
+    this.drawContentRow = function (self) {
+        return function (doc, e, columns, ri, row, style) {
+            var ele = self.__itemFieldElement;
+            var valueMember = ele.getAttribute("valueMember");
+            var conv = window.forms.Element(ele).GetObject("conv");
+            var checkBox = e.ownerDocument.createElement('span');
+            if(e.children[0]){
+                e.insertBefore(checkBox,e.children[0]);
+            }else {
+                e.appendChild(checkBox);
+            }
+            if (row) {
+                var selectedRows = conv.GetValue(ele)||[];
+                var hasSelected = false;
+                for(var i=0;i<selectedRows.length;i++){
+                    if(selectedRows[i][valueMember] === row[valueMember]){
+                        hasSelected = true;
+                        break;
+                    }
+                }
+                if (hasSelected) {
+                    e.className = style.classSelectedRow;
+                    e.children[0].className = style.classSelectedCheckBox;
+                    e.__hasSelectedRow = true;
+                }
+                else {
+                    e.className = style.classUnselectedRow;
+                    e.children[0].className = style.classUnselectedCheckBox;
+                    e.__hasSelectedRow = false;
+                }
+            } else {
+                e.className = style.classUnselectedRow;
+                e.children[0].className = style.classUnselectedCheckBox;
+                e.__hasSelectedRow = false;
+            }
+            var events = manageElement(checkBox, "tableView", "events");
+            window.forms.Event.Unregister(checkBox, "click", events.RowClick);
+            if(ele.__currRow && ele.__currRow[valueMember] == row[valueMember]) e.className = style.classCurrentRow;
+            events.RowClick = function () {
+                var selectedRows = conv.GetValue(ele)||[];
+                var field = ele.getAttribute("field");
+                if (!field || field == "") return;
+                var form = formCallCenter.DetectFormByElement(ele);
+                if(e.__hasSelectedRow){
+                    for(var i=0;i<selectedRows.length;i++){
+                        if(selectedRows[i][valueMember] === row[valueMember]){
+                            selectedRows.splice(i,1);
+                            break;
+                        }
+                    }
+                }else {
+                    selectedRows[selectedRows.length] = row;
+                }
+                form.SetField(field, [selectedRows], true);
+            }
+            window.forms.Event.Register(checkBox, "click", events.RowClick);
+            window.forms.Event.Unregister(e, "click", rowClick);
+            window.forms.Event.Register(e, "click", rowClick);
+            function rowClick() {
+                if(window.forms.Event.Source()==checkBox)return;
+                ele.__currRow = row;
+                var field = ele.getAttribute("field");
+                if (!field || field == "") return;
+                var selectedRows = conv.GetValue(ele)||[];
+                var form = formCallCenter.DetectFormByElement(ele);
+                form.SetField(field, [selectedRows], true);
+            }
+        }
+    } (this);
+    var inherit = this.InheritProperties;
+    this.InheritProperties = function (srcElement, desElement) {
+        window.forms.Form.SetAttribute(desElement, "conv", "window.forms.CheckableTableViewConv.TableViewItemValueConv(" + (style ? style.getJsonRaw() : null) + ")", true);
+        return inherit(srcElement, desElement);
+    }
+    window.forms.CheckableTableViewConv.TableViewItemValueConv = function (style) {
+        window.forms.ListValueConv.apply(this);
+        this.DetermineApply = function (ele, val) {
+            return true;
+        };
+        this.DecodeArguments = function (ele, args) {
+            if (!window.forms.object(args).InstanceOf(Array)) throw new Error("Array arguments needed for Set");
+            return args[0];
+        }
+        this.GetUIValue = (function (self) {
+            return function (ele) {
+                return self.GetValue(ele);
+            }
+        })(this);
+        this.ApplyValue = (function (self) {
+            return function (ele, value) {
+                value = value||[];
+                var valueMember = ele.getAttribute("valueMember");
+                var rows = ele.children[0].children[1].children[0].children[0].children;
+                //valueMap，currSelectedMap，willBeDeletedMap：为降低主循环(所有行循环)时间复杂度
+                var valueMap = {};
+                for(var i =  0;i<value.length;i++){ //为降低主循环(所有行)时间复杂度
+                    valueMap[value[i][valueMember]] = true;
+                }
+                var conv = window.forms.Element(ele).GetObject("conv");
+                var selectedRows = conv.GetValue(ele)||[];
+                var currSelectedMap = {};
+                for(var i =  0;i<selectedRows.length;i++){
+                    currSelectedMap[selectedRows[i][valueMember]] = true;
+                }
+                var willBeDeletedMap = {};
+                for (var i = 1, l = rows.length; i < l; i++) {
+                    var e = rows[i];
+                    if (valueMember && e.__currData && valueMap[e.__currData[valueMember]]) {
+                        e.className = style.classSelectedRow;
+                        e.children[0].className = style.classSelectedCheckBox;
+                        e.__hasSelectedRow = true;
+                        if(!currSelectedMap[e.__currData[valueMember]]){
+                            selectedRows[selectedRows.length] = e.__currData;
+                        }
+                    } else {
+                        e.className = style.classUnselectedRow;
+                        e.children[0].className = style.classUnselectedCheckBox;
+                        e.__hasSelectedRow = false;
+                        if(currSelectedMap[e.__currData[valueMember]]){
+                            willBeDeletedMap[e.__currData[valueMember]] = true;
+                        }
+                    }
+                    if(ele.__currRow && ele.__currRow[valueMember] == e.__currData[valueMember]){
+                        e.className = style.classCurrentRow;
+                    }
+                }
+                for(var i = 0;i<selectedRows.length;i++){
+                    if(willBeDeletedMap[selectedRows[i][valueMember]]){
+                        selectedRows.splice(i,1);
+                        i--;
+                    }
+                }
+                var allres = self.GetValue(ele.parentElement);
+                if(value && value.length && allres.length === value.length){
+                    checkAll.__isCheck = true;
+                    checkAll.className =  style.classSelectedCheckAllBox;
+                }else {
+                    checkAll.__isCheck = false;
+                    checkAll.className =  style.classUnselectedCheckAllBox;
+                }
+            }
+        })(this);
+    };
+}
+window.forms.SetUIFieldsConv = function (style) {
+    window.forms.SingleValueConv.apply(this,arguments);
+    this.ApplyValue = function (ele, val) {
+        if(typeof val === 'object'){
+            var allEle = ele.ownerDocument.all;
+            var field = null;
+            var form = formCallCenter.DetectFormByElement(ele);
+            if(!form)return;
+            for(var i = 0;i<allEle.length;i++){
+                if(allEle[i] === ele||allEle[i].tagName=== "script" || allEle[i].tagName==="head" || allEle[i].tagName=== "meta" || allEle[i].tagName=== "title") continue;
+                field = allEle[i].getAttribute('field')||allEle[i].getAttribute('itemField');
+                if(!field) continue;
+                form.SetField(field,[GetPathData(val,field)]);
+            }
+            function GetPathData(data,path){
+                if(!data||!path||!path.length)return data;
+                var ps = path.split('.');
+                for(var i=0;i<ps.length;i++){
+                    data=data[ps[i]];
+                    if(!data)break;
+                }
+                return data;
+            }
+        }
+    }
+};
+//多选表格
+FIISForm.CheckableTableViewConv = function (style,decode) {
+    window.forms.CheckableTableViewConv.apply(this,arguments);
+    FIISForm.FIISValueDecoder.apply(this, [decode]);
 };
 //多选框
 FIISForm.CheckboxButtonListConv = function (style,decode) {
@@ -511,7 +719,18 @@ FIISForm.CheckboxListConv = function (style, decode) {
     window.forms.CheckboxListConv.apply(this, [null, style]);
     FIISForm.FIISValueDecoder.apply(this, [decode]);
 };
-FIISForm.PathValueSupportedTableConv = function (style, decode) {
+FIISForm.ReadonlyListValueConv = function (style, decode) {
+    window.forms.ReadonlyListValueConv.apply(this,[style]);
+    FIISForm.FIISValueDecoder.apply(this, [decode]);
+};
+
+FIISForm.TreeViewConv = function (style, decode) {
+    window.forms.TreeViewConv.apply(this, [style]);
+    this.DecodeArguments = decode||function (ele, args) {
+        return args[0];
+    }
+};
+FIISForm.PathValueTableViewConv = function (style, decode) {
     FIISForm.TableViewConv.apply(this,arguments);
     var decodeArgs = this.DecodeArguments;
     this.DecodeArguments=function (ele,value) {
@@ -525,7 +744,9 @@ FIISForm.PathValueSupportedTableConv = function (style, decode) {
         return value;
     };
     this.drawContentCell = function(doc, e, ri, r, ci, c, style) {
-        window.forms.Element(e).SetText(GetPathData(r,c.Name));
+        var display = GetPathData(r,c.Name);
+        window.forms.Element(e).SetText(display);
+        e.title = display||"";
     };
     function GetPathData(data,path){
         if(!data||!path||!path.length)return data;
@@ -537,14 +758,47 @@ FIISForm.PathValueSupportedTableConv = function (style, decode) {
         return data;
     }
 };
-FIISForm.ReadonlyListValueConv = function (style,decode) {
-    window.forms.ReadonlyListValueConv.apply(this,[style]);
-    FIISForm.FIISValueDecoder.apply(this, [decode]);
-};
-
-FIISForm.TreeViewConv = function (style, decode) {
-    window.forms.TreeViewConv.apply(this, [style]);
-    this.DecodeArguments = decode||function (ele, args) {
-        return args[0];
+FIISForm.PathValueCheckableTableViewConv = function (style, decode) {
+    FIISForm.CheckableTableViewConv.apply(this,arguments);
+    var decodeArgs = this.DecodeArguments;
+    this.DecodeArguments=function (ele,value) {
+        value = decodeArgs(ele,value);
+        var valueMember = ele.getAttribute("itemValueMember");
+        if(valueMember&&value){
+            for (var i=0;i<value.length;i++){
+                value[i][valueMember]=GetPathData(value[i],valueMember);
+            }
+        }
+        return value;
+    };
+    this.drawContentCell = function(doc, e, ri, r, ci, c, style) {
+        var display = GetPathData(r,c.Name);
+        window.forms.Element(e).SetText(display);
+        e.title = display||"";
+    };
+    function GetPathData(data,path){
+        if(!data||!path||!path.length)return data;
+        var ps = path.split('.');
+        for(var i=0;i<ps.length;i++){
+            data=data[ps[i]];
+            if(!data)break;
+        }
+        return data;
     }
 };
+
+//requester
+FIISForm.PathValueJsonRequester = function (obj,field) {
+    this.Request = function (form, args, callback) {
+        callback(GetPathData(obj,field));
+        function GetPathData(data,path){
+            if(!data||!path||!path.length)return data;
+            var ps = path.split('.');
+            for(var i=0;i<ps.length;i++){
+                data=data[ps[i]];
+                if(!data)break;
+            }
+            return data;
+        }
+    }
+}

@@ -239,7 +239,7 @@ window.forms.ListViewConv = function (userInput, filter, style) {
                     mnu.drawRow = function (doc, e, ri, d, style) {
                         e.__currData = d;
                         e.className = style.classItem;
-                        e.title = d[style.displayMember];
+                        e.title = d[style.displayMember]||"";
                         window.forms.Element(e).SetText(d[style.displayMember]);
                         e.onclick = function (e) {
                             return function () {
@@ -313,7 +313,7 @@ window.forms.ListViewConv = function (userInput, filter, style) {
         } (this);
         this.ApplyValue = function (ele, value) {
             var displayMember = ele.getAttribute("displayMember");
-            var text = value ? value[displayMember] : "";
+            var text = value ? (value[displayMember]||"") : "";
             window.forms.Element(ele).SetText(text);
             ele.title = text;
         }
@@ -505,6 +505,7 @@ window.forms.TileListConv = function (style) {
                             form.SetField(field, [e.__currData], true);
                         }
                     } (e);
+                    if(typeof style.drawItem == 'function')style.drawItem(e,list[i]);
                     root.appendChild(e);
                 }
             }
@@ -794,7 +795,7 @@ window.forms.CheckboxListConv = function (filter, style) {
                         else {
                             e.style.cursor = "pointer";
                             e.className = d.chklSelected ? style.classSelectedItem : style.classUnselectedItem;
-                            e.title = d[style.displayMember];
+                            e.title = d[style.displayMember]||"";
                             window.forms.Element(e).SetText((d.chklSelected ? " ■ " : " □ ") + d[style.displayMember]);
                             e.onclick = function (e) {
                                 return function () {
@@ -910,7 +911,9 @@ window.forms.CheckboxListConv = function (filter, style) {
                                         list[list.length] = items[i];
                                     }
                                 }
-                                if (find) self.SetValue(ele, [list]);
+                                var field = ele.getAttribute('field');
+                                var form = formCallCenter.DetectFormByElement(ele);
+                                if (find) form.SetField(field, [list]);
                             }
                         }
                     } (ee);
@@ -924,8 +927,8 @@ window.forms.CheckboxListConv = function (filter, style) {
                     ee.__currData = value[i];
                     var et = ee.children[0];
                     var ec = ee.children[1];
-                    et.title = value[i][displayMember];
-                    ec.title = "删除选项:" + value[i][displayMember];
+                    et.title = value[i][displayMember]||"";
+                    ec.title = "删除选项:" + (value[i][displayMember]||"");
                     window.forms.Element(et).SetText(value[i][displayMember]);
                     window.forms.Element(ec).SetText("⊗");
                     if (i < cnt - 1) {

@@ -31,3 +31,16 @@ function navigateHandler() {
         window.forms.Element(ele).GetWindow().parent.location.href = value;
     }
 }
+//不同报告状态对应样式
+var reportStatusStyle = {
+    "Arrived":{color:'#000'},
+    "Calling":{color:'#000'},
+    "Exam":{color:'#44f5ff'},
+    "Leave":{color:'#000'},
+    "Printed":{color:'#e30cff'},
+    "Registered":{color:'#000'},
+    "Rejected":{color:'#ff4232'},
+    "Reported":{color:'#0000ff'},
+    "Reviewed":{color:'#00ff00'},
+    "Scheduled":{color:'#ffc61d'},
+};
