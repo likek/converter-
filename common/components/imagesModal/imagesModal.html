@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图像查看器</title>
+    <link rel="stylesheet" href="imagesModal.css">
+    <script src="../../components_0.js"></script>
+    <script src="imagesModal_0.js"></script>
+</head>
+<body class="imagesModal-body">
+<div id="thumbnail" class="thumbnailContainer"><!--缩略图--></div>
+<div id="imagesContainer" class="imagesModal-imagesCtn"><!--图像容器--></div>
+<!--右键菜单-->
+<ul id="rightClickMenu" class="imagesModal-rightClickMenu">
+    <li onclick="imagesShow.imageTransform.transform().reset();">还原</li>
+    <li onclick="imagesShow.imageTransform.transform().rotate(-90);">逆时针旋转</li>
+    <li onclick="imagesShow.imageTransform.transform().rotate(90);">顺时针旋转</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,82 @@
+.imagesModal-body{
+    margin: 0;
+    padding: 24px 0 0;
+    overflow: hidden;
+}
+.classPageInfo{
+    position: absolute;
+    background-color: #fff;
+    color: #000;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    text-align: right;
+    box-sizing: border-box;
+    z-index: 3;
+}
+.classPre,.classNext{
+    background-color: transparent;
+    color: transparent;
+    border: none;
+    font-size: 90px;
+    position: fixed;
+    top: 0;
+    height: 100%;
+    width: 80px;
+    cursor: pointer;
+}
+.classPre:hover,.classNext:hover{
+    background-color: rgba(66,66,66,0.5);
+    color: #fff;
+}
+.classPre{
+    left: 0;
+}
+.classNext{
+    right: 0;
+}
+.classPre>div,.classNext>div{
+    position: absolute;
+    top: 50%;
+    left: 16px;
+}
+.imagesModal-rightClickMenu{
+    background-color: #fff;
+    padding: 0;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    display: none;
+    color: #000;
+}
+.imagesModal-rightClickMenu>li{
+    border-bottom: 1px solid #ccc;
+    list-style: none;
+    padding: 6px;
+}
+.imagesModal-imagesCtn img{
+    width: 100%;
+}
+/*缩略图*/
+.thumbnailContainer{
+    overflow: auto;
+    white-space: nowrap;
+    word-wrap: break-word;
+    text-align: right;
+    position: absolute;
+    top: 18px;
+    width: 100%;
+    z-index: 3;
+    padding: 6px 10% 0;
+    box-sizing: border-box;
+    background-color: #fff;
+}
+.classThumbnailImg,.classCurrThumbnailImg{
+    width: 60px;
+    height: 60px;
+    margin: 0 6px;
+    box-sizing: border-box;
+}
+.classCurrThumbnailImg{
+    border: 3px solid #f00;
+}
